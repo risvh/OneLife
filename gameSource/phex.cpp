@@ -1187,7 +1187,7 @@ bool Phex::onMouseDown(float x, float y) {
 	if (!HetuwMod::phexIsEnabled) return false;
 	HetuwMod::pointFromMapToPercentCoords(x, y);
 	if (!HetuwMod::pointIsInsideRec(recBckgr, x, y)) {
-		onUpdateFocus(false);
+		// onUpdateFocus(false); //LunarMod
 		return false;
 	}
 	for(unsigned k=0; k<buttons.size(); k++) {

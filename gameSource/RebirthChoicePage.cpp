@@ -174,6 +174,10 @@ void RebirthChoicePage::draw( doublePair inViewCenter,
         
         drawSprite( instructionsSprite, pos );
         }
+		
+	//LunarMod
+    int autoRebirth = SettingsManager::getIntSetting( "autoRebirth", 0 );
+	if (autoRebirth == 1) setSignal( "reborn" );
     }
 
 
@@ -234,3 +238,17 @@ void RebirthChoicePage::makeActive( char inFresh ) {
         mTutorialButton.setLabelText( translate( "tutorial" ) );
         }
     }
+
+
+
+// LunarMod
+void RebirthChoicePage::keyDown( unsigned char inASCII ) {
+
+    if( inASCII == 10 || inASCII == 13 ) {
+        // enter key
+		
+		setSignal( "reborn" );
+
+
+    }
+}

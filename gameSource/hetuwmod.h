@@ -344,6 +344,8 @@ public:
 	static unsigned char charKey_ShowGrid;
 	static unsigned char charKey_MakePhoto;
 	static unsigned char charKey_Phex;
+	
+	static unsigned char charKey_Red; //LunarMod
 
 	static unsigned char charKey_ShowMap;
 	static unsigned char charKey_MapZoomIn;
@@ -635,6 +637,8 @@ public:
 	static bool b_drawSearchText;
 	static bool b_drawSearchTileRec;
 	static bool b_drawSearchPulsate;
+	
+	static int lunarPlayerHoldingItem;
 
 	static char usingCustomServer;
 	static char *serverIP;
@@ -675,7 +679,9 @@ private:
 	static void setHelpColorNormal();
 	static void setHelpColorSpecial();
 
+	public: // LunarMod
 	static bool bDrawCords;
+	private: // LunarMod
 	static void drawCords();
 
 	static bool bDrawHostileTiles;
@@ -693,6 +699,8 @@ private:
 	static bool downKeyDown;
 	static bool leftKeyDown;
 	static bool rightKeyDown;
+	
+	static bool useRedMod; //LunarMod
 
 	static bool mapZoomInKeyDown;
 	static bool mapZoomOutKeyDown;
@@ -723,7 +731,9 @@ private:
 	static void updatePlayerToMap(LiveObject *o, bool deathMsg = false);
 	static void updateMap();
 
+	public: // LunarMod
 	static int iDrawPlayersInRangePanel;
+	private: // LunarMod
 	static void updatePlayersInRangePanel();
 	static void drawPlayersInRangePanel();
 
@@ -739,10 +749,14 @@ private:
 
 	static bool objIdReverseAction( int objId );
 
+	public: // LunarMod
 	static bool bDrawHomeCords;
+	private: // LunarMod
 	static void drawHomeCords();
 	static void setDrawColorToCoordType(homePosType type);
+	public: // LunarMod
 	static bool bNextCharForHome;
+	private: // LunarMod
 	static void createCordsDrawStr();
 	static float longestCordsTextWidth;
 
@@ -753,14 +767,18 @@ private:
 	static bool bDrawInputString;
 	static string tempInputString;
 
+	public: // LunarMod
 	static int getCustomCords;
+	private: // LunarMod
 	static char tempCordChar;
 	static int tempCordX;
 	static int tempCordY;
 
 	static void drawSearchTiles();
 	static void drawSearchTilesLoop(bool drawText);
+	public: // LunarMod
 	static int getSearchInput;
+	private: // LunarMod
 	static std::vector<char*> searchWordList;
 	static bool bDrawSearchList;
 	static int drawSearchListTopY;

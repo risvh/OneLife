@@ -24,6 +24,9 @@
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
 
+#include <string> // LunarMod
+#include <fstream> // LunarMod: check if setting file exists
+
 static JenkinsRandomSource randSource;
 
 int emailFieldLockedMode = 0;
@@ -1387,8 +1390,58 @@ void ExistingAccountPage::keyDown( unsigned char inASCII ) {
 
     if( inASCII == 10 || inASCII == 13 ) {
         // enter key
-        
-        nextPage();
+		
+		nextPage();
+		}
+	
+	// LunarMod
+	// printf("DEBUG: %d / %c\n", inASCII, inASCII);
+	
+	bool commandKey = isCommandKeyDown();
+	bool shiftKey = isShiftKeyDown();
+	
+	char input = autoSprintf( "%c", inASCII)[0];
+	
+	//LunarMod
+    if( commandKey &&
+		(input == '1' ||
+		input == '2' ||
+		input == '3' ||
+		input == '4' ||
+		input == '5' ||
+		input == '6' ||
+		input == '7' ||
+		input == '8' ||
+		input == '9' ||
+		input == '0')
+		) {
+	
+		char *userEmailSettingName = autoSprintf( "email%c", input);
+		char *accountKeySettingName = autoSprintf( "accountKey%c", input);
+		
+		char *userEmail_old_charArr = mEmailField.getText();
+		std::string userEmail_old = userEmail_old_charArr;
+		char *userEmail_new_charArr = SettingsManager::getStringSetting( userEmailSettingName, "" );
+		std::string userEmail_new = userEmail_new_charArr;
+		
+		std::string delim = "|";
+		if (userEmail_old.find(delim) != std::string::npos) {
+			std::string seed = userEmail_old.substr(userEmail_old.find("|") + 1);
+			userEmail_new += delim;
+			userEmail_new += seed;
+            }
+		
+		char *userEmail = strdup( userEmail_new.c_str() );
+		char *accountKey = SettingsManager::getStringSetting( accountKeySettingName, "" );;
+		
+		if ( userEmail != NULL && accountKey != NULL) {
+			mEmailField.unfocus();
+			mKeyField.unfocus();
+			mEmailField.setText( userEmail );
+			mKeyField.setText( accountKey );
+            }
+			
+        return;
         }
     }
 

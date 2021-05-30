@@ -19,6 +19,11 @@
 #include "phex.h"
 #include "hetuwFont.h"
 
+//LunarMod
+#include <windows.h>
+#include "minorGems/util/stringUtils.h"
+#include "lunarmod.h"
+
 using namespace std;
 
 constexpr int HetuwMod::OBJID_SharpStone;
@@ -88,6 +93,8 @@ unsigned char HetuwMod::charKey_ShowGrid;
 unsigned char HetuwMod::charKey_MakePhoto;
 unsigned char HetuwMod::charKey_Phex;
 
+unsigned char HetuwMod::charKey_Red; //LunarMod
+
 unsigned char HetuwMod::charKey_CreateHome;
 unsigned char HetuwMod::charKey_FixCamera;
 
@@ -101,6 +108,8 @@ bool HetuwMod::upKeyDown;
 bool HetuwMod::downKeyDown;
 bool HetuwMod::leftKeyDown;
 bool HetuwMod::rightKeyDown;
+
+bool HetuwMod::useRedMod = true; //LunarMod
 
 doublePair HetuwMod::debugRecPos;
 doublePair HetuwMod::debugRecPos2;
@@ -244,6 +253,8 @@ bool HetuwMod::b_drawSearchText = true;
 bool HetuwMod::b_drawSearchTileRec = false;
 bool HetuwMod::b_drawSearchPulsate = true;
 
+int HetuwMod::lunarPlayerHoldingItem = 0;
+
 bool HetuwMod::bAutoDataUpdate = true;
 bool HetuwMod::bDrawGrid = false;
 
@@ -337,6 +348,8 @@ void HetuwMod::init() {
 	charKey_Phex = '#';
 	
 	infertileAge = 104;
+	
+	charKey_Red = '-'; //LunarMod
 
 	charKey_ShowMap = 'm';
 	charKey_MapZoomIn = 'u';
@@ -860,6 +873,9 @@ bool HetuwMod::setSetting( const char* name, const char* value ) {
 	if (strstr(name, "key_phex")) return setCharKey( charKey_Phex, value );
 	
 	if (strstr(name, "infertile_age")) infertileAge = atoi(value);
+	
+	//LunarMod
+	if (strstr(name, "key_red")) return setCharKey( charKey_Red, value );
 
 	if (strstr(name, "init_show_names")) {
 		iDrawNames = (int)(value[0]-'0');
@@ -1072,6 +1088,9 @@ void HetuwMod::initSettings() {
 	writeCharKeyToStream( ofs, "key_pocket", charKey_Pocket );
 	writeCharKeyToStream( ofs, "key_showgrid", charKey_ShowGrid );
 	writeCharKeyToStream( ofs, "key_phex", charKey_Phex );
+	
+	writeCharKeyToStream( ofs, "key_red", charKey_Red ); //LunarMod
+	
 	ofs << endl;
 	ofs << "infertile_age = " << infertileAge << endl;
 	ofs << endl;
@@ -1317,7 +1336,8 @@ void HetuwMod::setSearchArray() {
 					objIsBeingSearched[i] = true;
 					break;
 				}
-			} else if (charArrContainsCharArr(descr, searchWordList[k])) {
+			} else //if (charArrContainsCharArr(descr, searchWordList[k])) {
+			if (LunarMod::advSearchArray(o, searchWordList[k])) {
 				//printf("hetuw search for id: %i, desc: %s\n", i, o->description);
 				objIsBeingSearched[i] = true;
 				break;
@@ -1594,9 +1614,12 @@ void HetuwMod::livingLifeStep() {
 		else actionBetaRelativeToMe(tileRX, tileRY);
 	}
 	
-	if (livingLifePage->hetuwIsVogMode()) {
+	if (!LunarMod::followMode && LunarMod::followDistanceIndex != 2 && livingLifePage->hetuwIsVogMode()) {
 		if (intervalVogMove.step()) moveInVogMode();
 	}
+	
+	if ( ourLiveObject->inMotion ) lunarPlayerHoldingItem = ourLiveObject->holdingID;
+	
 }
 
 void HetuwMod::moveInVogMode() {
@@ -1949,6 +1972,10 @@ int HetuwMod::getObjYumID(ObjectRecord *obj) {
 
 // thanks to https://raw.githubusercontent.com/JustinLove/onelife-client-patches/master/yum-hover
 void HetuwMod::initBecomesFood() {
+	
+	// becomesFoodID = LunarMod::initBecomesFood();
+	// return;
+	
     becomesFoodID = new int[maxObjects];
     for (int i=0; i<maxObjects; i++) {
 		becomesFoodID[i] = becomesFood( i, 3 );
@@ -2430,6 +2457,21 @@ void HetuwMod::drawSearchTilesLoop(bool drawText) {
 
 			int mapI = livingLifePage->hetuwGetMapI( x, y );
 			if (mapI < 0) continue;
+			
+			//LunarMod
+			bool lunarBaseHunt = false;
+			char* lunarBaseHuntKeyword = "##BASE";
+			for (int i=0; i<searchWordList.size(); i++) {
+				if ( charArrContainsCharArr(searchWordList[i], lunarBaseHuntKeyword) ) lunarBaseHunt = true;
+			}
+			if (lunarBaseHunt) {
+				ObjectRecord *o = getObject(objId);
+				GridPos pos = { x, y };
+				if (LunarMod::isDefinitelyHumanMade(o, pos)) {
+					if (!drawText) { drawTileRect( x, y ); continue; }
+				}
+			}
+			
 			if (mMapContainedStacks[mapI].size() > 0) {
 				//int *stackArray = mMapContainedStacks[mapI].getElementArray();
 				int size = mMapContainedStacks[mapI].size();
@@ -2932,6 +2974,10 @@ bool HetuwMod::objIdReverseAction( int objId ) {
 }
 
 void HetuwMod::actionAlphaRelativeToMe( int x, int y ) {
+	
+	LunarMod::actionAlphaRelativeToMe( x, y );
+	return;
+	
 	x += ourLiveObject->xd;
 	y += ourLiveObject->yd;
 
@@ -2971,6 +3017,10 @@ void HetuwMod::actionAlphaRelativeToMe( int x, int y ) {
 }
 
 void HetuwMod::actionBetaRelativeToMe( int x, int y ) {
+	
+	LunarMod::actionBetaRelativeToMe( x, y );
+	return;
+	
 	x += ourLiveObject->xd;
 	y += ourLiveObject->yd;
 
@@ -3015,6 +3065,10 @@ void HetuwMod::setOurSendPosXY(int &x, int &y) {
 }
 
 void HetuwMod::useBackpack(bool replace) {
+	
+	LunarMod::useBackpack( replace );
+	return;
+	
 	int clothingSlot = 5; // backpack clothing slot
 
 	int x, y;
@@ -3059,6 +3113,10 @@ void HetuwMod::usePocket(int clothingID) {
 }
 
 void HetuwMod::useOnSelf() {
+	
+	LunarMod::useOnSelf();
+	return;
+	
 	int x, y;
 	setOurSendPosXY(x, y);
 
@@ -3185,6 +3243,8 @@ bool HetuwMod::addToTempInputString( unsigned char c, bool onlyNumbers, int minS
 
 // when return true -> end/return in keyDown function in LivingLife
 bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
+	
+	if (LunarMod::vogMode) return false;
 
 	if (sendKeyEvents) {
 		char message[32];
@@ -3674,6 +3734,8 @@ bool HetuwMod::livingLifeKeyUp(unsigned char inASCII) {
 		magnetWrongMoveDir = -1;
 		magnetMoveCount = 0;
 	}
+	
+	if (inASCII == charKey_Red) useRedMod = !useRedMod; //LunarMod
 
 	return r;
 }
@@ -3683,20 +3745,21 @@ bool HetuwMod::livingLifeSpecialKeyDown(unsigned char inKeyCode) {
 	bool shiftKey = isShiftKeyDown();
 	bool r = false;
 
-	if (!isCommandKeyDown() && !isShiftKeyDown()) {
-		if( inKeyCode == MG_KEY_LEFT ) { 
-			zoomDecrease(HetuwMod::zoomValueKey);
-		} else if( inKeyCode == MG_KEY_RIGHT ) { 
-			zoomIncrease(HetuwMod::zoomValueKey);
-		}
-	}
-	if (isCommandKeyDown()) {
-		if( inKeyCode == MG_KEY_LEFT ) {
-			guiScaleDecrease();
-		} else if( inKeyCode == MG_KEY_RIGHT ) {
-			guiScaleIncrease();
-		}
-	}
+	//LunarMod
+	// if (!isCommandKeyDown() && !isShiftKeyDown()) {
+		// if( inKeyCode == MG_KEY_LEFT ) { 
+			// zoomDecrease(HetuwMod::zoomValueKey);
+		// } else if( inKeyCode == MG_KEY_RIGHT ) { 
+			// zoomIncrease(HetuwMod::zoomValueKey);
+		// }
+	// }
+	// if (isCommandKeyDown()) {
+		// if( inKeyCode == MG_KEY_LEFT ) {
+			// guiScaleDecrease();
+		// } else if( inKeyCode == MG_KEY_RIGHT ) {
+			// guiScaleIncrease();
+		// }
+	// }
 
 	if (!commandKey && !shiftKey) {
 		if ( inKeyCode == MG_KEY_F1 ) {

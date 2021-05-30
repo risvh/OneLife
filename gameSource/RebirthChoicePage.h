@@ -24,6 +24,9 @@ class RebirthChoicePage : public GamePage, public ActionListener {
                            double inViewSize );
 
         virtual void makeActive( char inFresh );
+		
+		// LunarMod
+		virtual void keyDown( unsigned char inASCII );
         
     protected:
     

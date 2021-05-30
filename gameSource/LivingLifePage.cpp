@@ -59,6 +59,7 @@
 #include "phex.h"
 #include <string>
 #include "minitech.h"
+#include "lunarmod.h"
 
 static ObjectPickable objectPickable;
 
@@ -148,6 +149,12 @@ extern doublePair lastScreenViewCenter;
 doublePair LivingLifePage::hetuwGetLastScreenViewCenter() { return lastScreenViewCenter; }
 doublePair LivingLifePage::minitechGetLastScreenViewCenter() { return lastScreenViewCenter; }
 
+void LivingLifePage::lunarSetLastScreenViewCenter( doublePair screenViewCenter, bool jump ) { 
+	lastScreenViewCenter.x = screenViewCenter.x;
+	lastScreenViewCenter.y = screenViewCenter.y;
+	if (jump) setViewCenterPosition( screenViewCenter.x, screenViewCenter.y );
+}
+
 static char shouldMoveCamera = true;
 
 
@@ -177,6 +184,7 @@ static char vogPickerOn = false;
 
 bool LivingLifePage::hetuwIsVogMode() { return vogMode; }
 doublePair LivingLifePage::hetuwGetVogPos() { return vogPos; }
+bool LivingLifePage::lunarIsVogPickerOn() { return vogPickerOn; }
     
 
 extern float musicLoudness;
@@ -1069,6 +1077,10 @@ static float connectionMessageFade = 1.0f;
 static double connectedTime = 0;
 
 static char forceDisconnect = false;
+
+void LivingLifePage::lunarForceDisconnect( ) { //LunarMod
+	forceDisconnect = true;
+}
 
 
 // reads all waiting data from socket and stores it in buffer
@@ -2171,8 +2183,8 @@ static void findClosestPathSpot( LiveObject *inObject ) {
     else {
         // no path exists to find closest point on
         // our last known grid position is our closest point
-        start.x = inObject->xServer;
-        start.y = inObject->yServer;
+        start.x = inObject->xd; //xServer; //LunarMod
+        start.y = inObject->yd; //yServer;
         }
     
     inObject->closestPathPos = start;
@@ -2889,6 +2901,9 @@ int LivingLifePage::getObjId( int tileX, int tileY ) {
 	return mMap[i];
 }
 
+char *LivingLifePage::lunarGetNextActionMessage() {
+	return nextActionMessageToSend;
+}
 
 void LivingLifePage::hetuwSetNextActionMessage(const char* msg, int x, int y) {
 	if( nextActionMessageToSend != NULL ) {
@@ -3459,6 +3474,8 @@ LivingLifePage::LivingLifePage()
     if( ! tutorialDone ) {
         mTutorialNumber = 1;
         }
+
+	LunarMod::setLivingLifePage(this, &gameObjects, mMapD, pathFindingD, mMapContainedStacks, mMapSubContainedStacks);
 
 	// hetuw mod
 	mDeathReason = NULL;
@@ -4530,7 +4547,20 @@ void LivingLifePage::handleAnimSound( int inSourcePlayerID,
                             }
                         }
                     
-                    
+					char *cont = SettingsManager::getSettingContents( "silentObjects", "" );
+					int numParts;
+					char** parts;
+					bool holdingObj = false;
+
+					parts = split( cont, "\n", &numParts );
+					if ( numParts >= 1 && strcmp( cont, "" ) != 0 ) {
+						for ( unsigned int i=0; i<numParts; i++) {
+							string objIDStr = parts[i];
+							int objID = std::stoi( objIDStr );
+							holdingObj = holdingObj || inObjectID == objID;
+						}
+					}
+                    if (holdingObj && inSourcePlayerID == ourID) return; // LunarMod
                     
                     playSound( u,
                                getVectorFromCamera( inPosX, inPosY ) );
@@ -4758,7 +4788,7 @@ void LivingLifePage::drawMapCell( int inMapI,
         char flip = mMapTileFlips[ inMapI ];
         
         ObjectRecord *obj = getObject( oID );
-		if (!takingPhoto && HetuwMod::bxRay && obj->cachedHeight > CELL_D) {
+		if (!takingPhoto && HetuwMod::bxRay && (obj->cachedHeight > CELL_D || obj->floor)) { //LunarMod
 			if (HetuwMod::xRayOpacity == 0.0f) return;
 			HetuwMod::drawColorAlpha = HetuwMod::xRayOpacity;
 		}
@@ -7394,7 +7424,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
     if( showFPS ) startCountingSpritePixelsDrawn();
 
     double hugR = CELL_D * 0.6;
-
+	if (!HetuwMod::bxRay) //LunarMod
     // draw floors on top of biome
     for( int y=yEnd; y>=yStart; y-- ) {
         
@@ -11498,6 +11528,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
 				   &worldMouseX,
 				   &worldMouseY );
 	minitech::livingLifeDraw(worldMouseX, worldMouseY);
+	LunarMod::livingLifeDraw(worldMouseX, worldMouseY);
 
     if( vogMode ) {
         // draw again, so we can see picker
@@ -14325,6 +14356,7 @@ void LivingLifePage::step() {
     
 	minitech::livingLifeStep();
 	HetuwMod::livingLifeStep();
+	LunarMod::livingLifeStep();
 
     if( showFPS ) {
         timeMeasures[1] += game_getCurrentTime() - updateStartTime;
@@ -15391,7 +15423,7 @@ void LivingLifePage::step() {
                 mObjectPicker.setPosition( vogPos.x * CELL_D + 510,
                                            vogPos.y * CELL_D + 90 );
 
-				if (!HetuwMod::isMovingInVog) {
+				if (!HetuwMod::isMovingInVog && !(LunarMod::followMode && LunarMod::followDistanceIndex != 0)) { 
                 // jump camp instantly
                 lastScreenViewCenter.x = posX * CELL_D;
                 lastScreenViewCenter.y = posY * CELL_D;
@@ -15403,6 +15435,8 @@ void LivingLifePage::step() {
                 
                 mCurMouseOverCell.x = vogPos.x - mMapOffsetX + mMapD / 2;
                 mCurMouseOverCell.y = vogPos.y - mMapOffsetY + mMapD / 2;
+				
+				LunarMod::waitingForVogUpdate = false;
                 }
             }
         else if( type == PHOTO_SIGNATURE ) {
@@ -19132,10 +19166,12 @@ void LivingLifePage::step() {
                 
                 ourID = ourObject->id;
 
+				LunarMod::initOnServerJoin();
 				HetuwMod::initOnServerJoin();
 				minitech::initOnBirth();
                 if( ourID != lastPlayerID ) {
                     homePosStack.deleteAll();
+					LunarMod::initOnBirth();
 					HetuwMod::initOnBirth();
                     // different ID than last time, delete old home markers
                     oldHomePosStack.deleteAll();
@@ -21453,8 +21489,8 @@ void LivingLifePage::step() {
         
 
         if( viewChange ) {
-            //lastScreenViewCenter.x = screenTargetPos.x;
-            //lastScreenViewCenter.y = screenTargetPos.y;
+            // lastScreenViewCenter.x = screenTargetPos.x;
+            // lastScreenViewCenter.y = screenTargetPos.y;
             
             setViewCenterPosition( lastScreenViewCenter.x, 
                                    lastScreenViewCenter.y );
@@ -22325,11 +22361,12 @@ void LivingLifePage::step() {
         // (or we know that recent ping has been long enough so that
         //  animation will play long enough without waiting ahead of time)
         // AND server agrees with our position
-        if( ! ourLiveObject->inMotion && 
-            currentTime - ourLiveObject->pendingActionAnimationStartTime > 
-            0.166 - ourLiveObject->lastResponseTimeDelta &&
-            ourLiveObject->xd == ourLiveObject->xServer &&
-            ourLiveObject->yd == ourLiveObject->yServer ) {
+        // if( ! ourLiveObject->inMotion && 
+            // currentTime - ourLiveObject->pendingActionAnimationStartTime > 
+            // 0.166 - ourLiveObject->lastResponseTimeDelta &&
+            // ourLiveObject->xd == ourLiveObject->xServer &&
+            // ourLiveObject->yd == ourLiveObject->yServer ) {
+		if( ! ourLiveObject->inMotion ) { //LunarMod
  
             // move end acked by server AND action animation in progress
 
@@ -23689,6 +23726,7 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
             // string
             mCurMouseOverID = - p.hitOtherPersonID;
 			HetuwMod::onPlayerHoverOver(p.hitOtherPersonID);
+			LunarMod::mouseOverPlayerID = p.hitOtherPersonID;
             mCurMouseOverBiome = -1;
             }
         }
@@ -23946,6 +23984,8 @@ static void freeSavedPath() {
 
 
 void LivingLifePage::pointerDown( float inX, float inY ) {
+	
+	if (LunarMod::livingLifePageMouseDown( inX, inY )) return;
 	
 	if (minitech::livingLifePageMouseDown( inX, inY )) return;
 	
@@ -24373,6 +24413,10 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         // ignore unless it's a use-on-self action and standing still
 
         if( ! ourLiveObject->inMotion ) {
+			
+			//LunarMod
+			int oldHoldingID = ourLiveObject->holdingID;
+			ourLiveObject->holdingID = LunarMod::dirtyHoldingID;
             
             if( nextActionMessageToSend != NULL ) {
                 delete [] nextActionMessageToSend;
@@ -24400,6 +24444,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                                  sendX( clickDestX ), sendY( clickDestY ), 
                                  p.hitClothingIndex );
                 printf( "Use on self\n" );
+				
+				LunarMod::updateDirtyVarsUseOnSelf( p.hitClothingIndex );
                 }
             else {
                 // modclick on hit clothing
@@ -24420,10 +24466,15 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                                      p.hitSlotIndex );
                     printf( "Remove from own clothing container\n" );
                     }
+					
+				LunarMod::updateDirtyVarsUseClothing( p.hitClothingIndex, true );
                 }
 
             playerActionTargetX = clickDestX;
             playerActionTargetY = clickDestY;
+			
+			//LunarMod
+			ourLiveObject->holdingID = oldHoldingID;
             
             }
         
@@ -25170,6 +25221,12 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             char *extra = stringDuplicate( "" );
             
             char send = false;
+			
+			//LunarMod
+			int oldHoldingID = ourLiveObject->holdingID;
+			ourLiveObject->holdingID = LunarMod::dirtyHoldingID;
+			int mapI = hetuwGetMapI( clickDestX, clickDestY );
+			destID = LunarMod::dirtyMap[mapI];
             
             if( tryingToPickUpBaby ) {
                 action = "BABY";
@@ -25369,6 +25426,10 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 send = true;
                 }
             
+			//LunarMod
+			LunarMod::updateDirtyVars( modClick, clickDestX, clickDestY );
+			ourLiveObject->holdingID = oldHoldingID;
+			
             if( strcmp( action, "DROP" ) == 0 ) {
                 delete [] extra;
                 nextActionDropping = true;
@@ -25893,10 +25954,11 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
 			setSignal( "twinCancel" );
 		}
 	}
+	if (LunarMod::livingLifeKeyDown(inASCII)) return;
 	if (!vogMode) {
 		if (Phex::hasFocus && mSayField.isFocused()) mSayField.unfocusAll();
-		if (HetuwMod::livingLifeKeyDown(inASCII)) return;
 		if (minitech::livingLifeKeyDown(inASCII)) return;
+		if (HetuwMod::livingLifeKeyDown(inASCII)) return;
 	}
 
     switch( inASCII ) {
@@ -25923,6 +25985,7 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                 if( ! vogMode ) {
                     sendToServerSocket( (char*)"VOGS 0 0#" );
                     vogMode = true;
+					LunarMod::vogMode = true;
                     vogModeActuallyOn = false;
 
                     vogPos = getOurLiveObject()->currentPos;
@@ -25939,6 +26002,7 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                 else {
                     sendToServerSocket( (char*)"VOGX 0 0#" );
                     vogMode = false;
+					LunarMod::vogMode = false;
                     if( vogPickerOn ) {
                         removeComponent( &mObjectPicker );
                         mObjectPicker.removeActionListener( this );
@@ -26677,6 +26741,9 @@ void LivingLifePage::specialKeyDown( int inKeyCode ) {
 
         
 void LivingLifePage::keyUp( unsigned char inASCII ) {
+
+	if (LunarMod::livingLifeKeyUp(inASCII))
+		return;
 
 	if (HetuwMod::livingLifeKeyUp(inASCII))
 		return;

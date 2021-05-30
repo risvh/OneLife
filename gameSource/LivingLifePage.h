@@ -556,6 +556,8 @@ class LivingLifePage : public GamePage, public ActionListener {
 		void hetuwSetPanelOffsets();
 		bool hetuwSayFieldIsFocused() { return mSayField.isFocused(); }
 		doublePair hetuwGetLastScreenViewCenter();
+		void lunarSetLastScreenViewCenter( doublePair screenViewCenter, bool jump = true );
+		void lunarForceDisconnect();
 		void hetuwDrawMainFont( const char* str, doublePair drawPos, TextAlignment align = alignLeft  );
 		double hetuwMeasureStringMainFont(const char* str);
 		void hetuwDrawScaledMainFont( const char* str, doublePair drawPos, double customScale, TextAlignment align = alignLeft  );
@@ -565,6 +567,7 @@ class LivingLifePage : public GamePage, public ActionListener {
 		void hetuwDrawScaledHandwritingFont( const char* str, doublePair drawPos, double customScale, TextAlignment align = alignLeft  );
 		double hetuwMeasureScaledHandwritingFont(const char* str, double customScale );
 		void hetuwSay(const char* text);
+		char *lunarGetNextActionMessage();
 		void hetuwSetNextActionMessage( const char* str, int x, int y );
 		void hetuwSetNextActionDropping( bool b );
 		void hetuwSetNextActionEating( bool b );
@@ -580,6 +583,7 @@ class LivingLifePage : public GamePage, public ActionListener {
 		void hetuwSetTakingPhoto(bool takingPhoto);
 		bool hetuwIsVogMode();
 		doublePair hetuwGetVogPos();
+		bool lunarIsVogPickerOn();
 		char getTransHintable( TransRecord *inTrans ); // hetuw mod - changed from static and made visible to public
 		
         virtual void actionPerformed( GUIComponent *inTarget );
@@ -633,7 +637,7 @@ class LivingLifePage : public GamePage, public ActionListener {
         int mMapD;
 
         int *mMap;
-        
+
         int *mMapBiomes;
         int *mMapFloors;
 		protected: // hetuw mod

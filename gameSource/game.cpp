@@ -2095,7 +2095,7 @@ void drawFrame( char inUpdate ) {
                 }
             else if( existingAccountPage->checkSignal( "tutorial" ) ) {
                 livingLifePage->runTutorial( 1 );
-                SettingsManager::setSetting( "tutorialDone", 0 );
+                // SettingsManager::setSetting( "tutorialDone", 0 ); //LunarMod
                 
                 // tutorial button clears twin status
                 // they have to login from twin page to play as twin
@@ -2486,7 +2486,7 @@ void drawFrame( char inUpdate ) {
                 }
             else if( rebirthChoicePage->checkSignal( "tutorial" ) ) {
                 livingLifePage->runTutorial( 1 );
-                SettingsManager::setSetting( "tutorialDone", 0 );
+                // SettingsManager::setSetting( "tutorialDone", 0 ); //LunarMod
                 // heck, allow twins in tutorial too, for now, it's funny
                 startConnecting();
                 }

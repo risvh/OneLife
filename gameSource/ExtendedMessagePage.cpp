@@ -9,6 +9,9 @@
 #include "minorGems/util/stringUtils.h"
 
 
+#include "minorGems/util/SettingsManager.h" //LunarMod
+
+
 extern Font *oldMainFont;
 
 
@@ -77,5 +80,19 @@ void ExtendedMessagePage::draw( doublePair inViewCenter,
         drawMessage( mSubMessage, pos, false, 1.0, true );
         }
     
+	//LunarMod
+    int autoRebirth = SettingsManager::getIntSetting( "autoRebirth", 0 );
+	if (autoRebirth == 1) setSignal( "done" );
     }
 
+// LunarMod
+void ExtendedMessagePage::keyDown( unsigned char inASCII ) {
+
+    if( inASCII == 10 || inASCII == 13 ) {
+        // enter key
+		
+		setSignal( "done" );
+
+
+    }
+}

@@ -14,6 +14,8 @@ ROOT_PATH = ../..
 
 
 LAYER_SOURCE = \
+lunarmod.cpp \
+lunarmod_pathFind.cpp \
 minitech.cpp \
 hetuwmod.cpp \
 hetuwFont.cpp \
