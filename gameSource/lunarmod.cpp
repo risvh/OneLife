@@ -239,12 +239,14 @@ void LunarMod::initOnBirth() {
 	
 	
 
-	
+	// delete d;
 	d = new char[1024];
 	memset(d, 0, 32);
 	
 
-	std::string dir = SettingsManager::getDirectoryName();
+	char *dirChars = SettingsManager::getDirectoryName();
+    std::string dir(dirChars);
+    delete [] dirChars;
 	
 	for (int i=0; i<10; i++) {
 		std::string presetFilename = "advSearchPreset" + to_string(i);
@@ -254,6 +256,7 @@ void LunarMod::initOnBirth() {
 		if (FILE *userEmailFile = fopen(presetPath.c_str(), "r")) {
 			char *cont = SettingsManager::getSettingContents( presetFilename.c_str(), "" );
 			presets.push_back(cont);
+            delete [] cont;
 		} else {
 			break;
 		}
@@ -766,7 +769,9 @@ bool LunarMod::advSearchArray(ObjectRecord* o, const char* cSearchWord) {
 				if( strcmp( parts[i], "" ) != 0 ) {
 					beingSearched = beingSearched || advSearchArray(o, parts[i]);
 				}
+                delete [] parts[i];
 			}
+            delete [] parts;
 
 			return beingSearched;
 			
@@ -2491,7 +2496,7 @@ void LunarMod::sendMove(GridPos* path, int pathLength) {
 					livingLifePage->sendY( path[0].y ),
 					ourLiveObject->lastMoveSequenceNumber );
 	moveMessageBuffer.appendElementString( startString );
-	// delete [] startString;
+	delete [] startString;
 	
 	for( int i=1; i<pathLength; i++ ) {
 		// rest are relative to start
@@ -2499,12 +2504,13 @@ void LunarMod::sendMove(GridPos* path, int pathLength) {
 										path[i].x - path[0].x,
 										path[i].y - path[0].y );
 		moveMessageBuffer.appendElementString( stepString );
-		// delete [] stepString;
+		delete [] stepString;
 	}
 	moveMessageBuffer.appendElementString( "#" );
 	
 	char *message = moveMessageBuffer.getElementString();
 	livingLifePage->sendToServerSocket( message );
+	delete [] message;
 }
 
 void LunarMod::sendStep(int startX, int startY, int relativeX, int relativeY) {
@@ -2519,6 +2525,7 @@ void LunarMod::sendStep(int startX, int startY, int relativeX, int relativeY) {
 					relativeY );
 
 	livingLifePage->sendToServerSocket( message );
+    delete [] message;
 	
 }
 
@@ -2569,9 +2576,8 @@ int LunarMod::move(int destX, int destY) {
 		
 		bool destUnknown = true;
 		
-		int *mMap = LunarMod::livingLifePage->mMap;
-		int mapI = livingLifePage->hetuwGetMapI( goalX, goalY );
-		destUnknown = mMap[ mapI ] < 0 || mMap[ mapI ] >= maxObjects;
+		int objId = livingLifePage->hetuwGetObjId( goalX, goalY );
+		destUnknown = objId < 0 || objId > maxObjects;
 		
 		while (destUnknown) {
 			if (goalX > currentX) goalX--;
@@ -2581,8 +2587,8 @@ int LunarMod::move(int destX, int destY) {
 			
 			if ( distance(currentX, currentY, goalX, goalY) == 0 ) return 0;
 			
-			mapI = livingLifePage->hetuwGetMapI( goalX, goalY );
-			destUnknown = mMap[ mapI ] < 0 || mMap[ mapI ] >= maxObjects;
+            objId = livingLifePage->hetuwGetObjId( goalX, goalY );
+            destUnknown = objId < 0 || objId > maxObjects;
 		}
 		
 	}
@@ -2623,6 +2629,8 @@ int LunarMod::move(int destX, int destY) {
 									&( closestFound )
 									);
 	}
+    
+    delete [] blockedMap;
 	
 	if( pathFound ) {
 		
@@ -2656,8 +2664,6 @@ int LunarMod::move(int destX, int destY) {
 				double(ourLiveObject->currentPos.x * CELL_D), 
 				double(ourLiveObject->currentPos.y * CELL_D) };
 			livingLifePage->lunarSetLastScreenViewCenter( screenViewCenter );
-		
-			delete [] blockedMap;
 			
 			return 0;
 		}
@@ -3331,7 +3337,7 @@ bool LunarMod::ghostModeAwake() {
 	for (int i=-unknownCheckRadius; i<=unknownCheckRadius; i++) {
 		for (int j=-unknownCheckRadius; j<=unknownCheckRadius; j++) {
 			int mI = livingLifePage->hetuwGetMapI( currentX + i, currentY + j );
-			if ( livingLifePage->mMapBiomes[mI] < 0 ) unknownTileCount++;
+			if ( mI >= 0 && livingLifePage->mMapBiomes[mI] < 0 ) unknownTileCount++;
 		}
 	}
 

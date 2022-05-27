@@ -1350,9 +1350,9 @@ string LivingLifePage::minitechGetDisplayObjectDescription( int objId ) {
     if( o == NULL ) {
 		return "";
     }
-	char *descriptionChars = getDisplayObjectDescription(objId);
-	string description(descriptionChars);
-	delete [] descriptionChars;
+    char *descriptionChars = getDisplayObjectDescription(objId);
+    string description(descriptionChars);
+    delete [] descriptionChars;
 	return description;
 }
 
@@ -2129,7 +2129,6 @@ char LivingLifePage::isBadBiome( int inMapI ) {
         }
     return false;
     }
-
 
 
 
@@ -4558,8 +4557,11 @@ void LivingLifePage::handleAnimSound( int inSourcePlayerID,
 							string objIDStr = parts[i];
 							int objID = std::stoi( objIDStr );
 							holdingObj = holdingObj || inObjectID == objID;
+                            delete [] parts[i];
 						}
+                        delete [] parts;
 					}
+                    delete [] cont;
                     if (holdingObj && inSourcePlayerID == ourID) return; // LunarMod
                     
                     playSound( u,
@@ -19171,7 +19173,6 @@ void LivingLifePage::step() {
 				minitech::initOnBirth();
                 if( ourID != lastPlayerID ) {
                     homePosStack.deleteAll();
-					LunarMod::initOnBirth();
 					HetuwMod::initOnBirth();
                     // different ID than last time, delete old home markers
                     oldHomePosStack.deleteAll();
