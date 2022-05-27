@@ -2595,7 +2595,7 @@ int LunarMod::move(int destX, int destY) {
 	
 	GridPos goal = {goalX, goalY};
 	
-	char* blockedMap;
+	char* blockedMap = NULL;
 	
 	if (ghostMode) {
 		int numPathMapCells = pathFindingD * pathFindingD;
@@ -2664,6 +2664,8 @@ int LunarMod::move(int destX, int destY) {
 				double(ourLiveObject->currentPos.x * CELL_D), 
 				double(ourLiveObject->currentPos.y * CELL_D) };
 			livingLifePage->lunarSetLastScreenViewCenter( screenViewCenter );
+            
+            delete [] blockedMap;
 			
 			return 0;
 		}
