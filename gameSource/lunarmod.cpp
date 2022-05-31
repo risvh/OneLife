@@ -1729,12 +1729,22 @@ void LunarMod::livingLifeDraw(float worldMouseX, float worldMouseY) {
 		// int posBiome = livingLifePage->mMapBiomes[mapI];
 		
 		// int holdingID = ourLiveObject->holdingID;
+        
+        int graveID = -1;
+        for( int g=0; g<livingLifePage->mGraveInfo.size(); g++ ) {
+            GraveInfo *gI = livingLifePage->mGraveInfo.getElement( g );
+            if( gI->worldPos.x == mouseX && gI->worldPos.y == mouseY ) {
+                graveID = gI->playerID;
+            }
+        }
 		
 		sprintf( d, 
 			"\n HO: %d, %d, GRD: %d, %d"
-			"\n STACK: %d, NULL: %d",
+			"\n STACK: %d, NULL: %d"
+            "\n GRAVE: %d",
 			ourLiveObject->holdingID, dirtyHoldingID, objId, getObjIdFromDirtyMapI(mapI),
-			dirtyHoldingStack.size(), livingLifePage->lunarGetNextActionMessage() == NULL
+			dirtyHoldingStack.size(), livingLifePage->lunarGetNextActionMessage() == NULL,
+            graveID
 		);
 		
 		char sBuf[64];

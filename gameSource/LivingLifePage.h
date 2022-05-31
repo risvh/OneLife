@@ -396,6 +396,10 @@ typedef struct GraveInfo {
         // used to detect when we've moused away, even if not mousing
         // over another grave
         double lastMouseOverTime;
+        
+        //LunarMod
+        int playerID;
+        
     } GraveInfo;
         
 
@@ -1085,9 +1089,9 @@ class LivingLifePage : public GamePage, public ActionListener {
                               int inOldFrameCount, int inNewFrameCount,
                               double inPosX, double inPosY );
         
-
+        public: // Lunar mod
         SimpleVector<GraveInfo> mGraveInfo;
-
+        protected: // Lunar mod
         SimpleVector<OwnerInfo> mOwnerInfo;
         
         void clearOwnerInfo();

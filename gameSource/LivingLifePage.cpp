@@ -14931,6 +14931,7 @@ void LivingLifePage::step() {
                     g.creationTimeUnknown = false;
                     g.lastMouseOverYears = -1;
                     g.lastMouseOverTime = g.creationTime;
+                    g.playerID = playerID; //LunarMod
                     
                     char *des = gravePerson->relationName;
                     char *desToDelete = NULL;
@@ -15134,6 +15135,7 @@ void LivingLifePage::step() {
                 GraveInfo g;
                 g.worldPos.x = posX;
                 g.worldPos.y = posY;
+                g.playerID = playerID; //LunarMod
                 
                 char *des = relationName;
                 char *desToDelete = NULL;
