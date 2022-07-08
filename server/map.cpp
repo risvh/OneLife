@@ -335,6 +335,10 @@ static char lookTimeDBOpen = false;
  
 static DB db;
 static char dbOpen = false;
+
+
+static DB newdb;
+static char newdbOpen = false;
  
  
 static DB timeDB;
@@ -3047,7 +3051,60 @@ void reseedMap( char inForceFresh ) {
         }
     }
  
- 
+
+int getTweakedBaseMap( int inX, int inY );
+
+static void copyMap() {
+    AppLog::info( "\n ======================== COPYING AND CLEANING MAP ======================== \n" );
+   
+    skipTrackingMapChanges = true;
+   
+    DB_Iterator dbi;
+   
+    // AppLog::info( "-1" );
+    DB_Iterator_init( &db, &dbi );
+   
+    unsigned char key[16];
+   
+    unsigned char value[4];
+
+   
+    int totalDBRecordCount = 0;
+   
+    int totalSetCount = 0;
+    // AppLog::info( "0" );
+    while( DB_Iterator_next( &dbi, key, value ) > 0 ) {
+        totalDBRecordCount++;
+       
+        int s = valueToInt( &( key[8] ) );
+        // AppLog::info( "1" );
+        int b = valueToInt( &( key[12] ) );
+        // AppLog::info( "2" );
+        int id = valueToInt( value );
+        // AppLog::info( "3" );
+        if( s == 0 && b == 0 ) {
+            
+            int x = valueToInt( key );
+            // AppLog::info( "3.1" );
+            int y = valueToInt( &( key[4] ) );
+            // printf( "3.2 - %d, %d \n", x, y );
+            int wildTile = getTweakedBaseMap( x, y );
+            // printf( "4  %d, %d, %d, %d \n", x, y, wildTile, id );
+           
+            if( wildTile == id ) continue;
+            }
+        
+        totalSetCount++;
+        DB_put( &newdb, key, value );
+
+        }
+   
+    AppLog::info( "\n ====================== DONE ====================== \n" );
+    printf( "====================== OLD CELL COUNT = %d ====================== \n", totalDBRecordCount );
+    printf( "====================== NEW CELL COUNT = %d ====================== \n", totalSetCount );
+    }
+
+
  
  
 char initMap() {
@@ -3624,7 +3681,40 @@ char initMap() {
                          4 // one int, object ID at x,y in slot (s-3)
                            // OR contained count if s=2
                          );
-   
+
+    error = DB_open( &newdb,
+                         "map2.db",
+                         KISSDB_OPEN_MODE_RWCREAT,
+                         80000,
+                         16, // four 32-bit ints, xysb
+                             // s is the slot number
+                             // s=0 for base object
+                             // s=1 decay ETA seconds (wall clock time)
+                             // s=2 for count of contained objects
+                             // s=3 first contained object
+                             // s=4 second contained object
+                             // s=... remaining contained objects
+                             // Then decay ETA for each slot, in order,
+                             //   after that.
+                             // s = -1
+                             //  is a special flag slot set to 0 if NONE
+                             //  of the contained items have ETA decay
+                             //  or 1 if some of the contained items might
+                             //  have ETA decay.
+                             //  (this saves us from having to check each
+                             //   one)
+                             // If a contained object id is negative,
+                             // that indicates that it sub-contains
+                             // other objects in its corresponding b slot
+                             //
+                             // b is for indexing sub-container slots
+                             // b=0 is the main object
+                             // b=1 is the first sub-slot, etc.
+                         4 // one int, object ID at x,y in slot (s-3)
+                           // OR contained count if s=2
+                         );
+
+
     if( error ) {
         AppLog::errorF( "Error %d opening map KissDB", error );
         return false;
@@ -4050,7 +4140,7 @@ char initMap() {
         globalTriggerStates.push_back( s );
         }
  
- 
+ copyMap();
  
     useTestMap = SettingsManager::getIntSetting( "useTestMap", 0 );
    
