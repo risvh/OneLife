@@ -65,6 +65,7 @@ int LunarMod::pathFindingD;
 SimpleVector<int> *LunarMod::mMapContainedStacks;
 SimpleVector<SimpleVector<int>> *LunarMod::mMapSubContainedStacks;
 char* LunarMod::bMap = NULL;
+bool LunarMod::sayingNOBB = false;
 
 int LunarMod::mouseX;
 int LunarMod::mouseY;
@@ -263,7 +264,9 @@ void LunarMod::initOnBirth() {
 	}
 	
 	
-	
+	if( abs(ourLiveObject->age - 14.5) <= 0.5 && SettingsManager::getIntSetting( "defaultNOBB", 1 ) ) {
+        sayingNOBB = true;
+    }
 }
 
 void LunarMod::refreshDirtyMap() {
@@ -1916,6 +1919,16 @@ void LunarMod::livingLifeStep() {
 	currentPos = {currentX, currentY};
 	
 	
+    if( sayingNOBB ) {
+        string name = "";
+        if( ourLiveObject->name ) name = ourLiveObject->name;
+        if( name.find("+") == std::string::npos ) {
+            if( HetuwMod::stepCount % 90 == 0 ) HetuwMod::Say( "NO BB" );
+        } else {
+            sayingNOBB = false;
+        }
+    }
+    
 	if (afkModeVerbose) { //BUG
 		// HetuwMod::sayBuffer.clear();
 		// HetuwMod::sayBuffer.shrink_to_fit();
@@ -2196,6 +2209,16 @@ bool LunarMod::livingLifeKeyDown(unsigned char inASCII) {
 	bool shiftKey = isShiftKeyDown();
 	
 	if ( vogMode ) {
+        
+        if ( livingLifePage->lunarIsVogPickerOn() ) {
+            if( !commandKey && inASCII == 9 ) {
+                livingLifePage->mObjectPicker.focusSearchField();
+                return true;
+            } else if( commandKey && inASCII == 9 ) {
+                livingLifePage->mObjectPicker.clearSearchField();
+                return true;                
+            }
+        }
 		
 		if ( livingLifePage->lunarIsVogPickerOn() ) return false;
         
@@ -2249,11 +2272,11 @@ bool LunarMod::livingLifeKeyDown(unsigned char inASCII) {
 		return true;
 	}
 	
-	if (!shiftKey && (inASCII == slashDieKey || inASCII == toupper(slashDieKey))) { //M
-		char *message = autoSprintf( "DIE 0 0#" );
-		livingLifePage->sendToServerSocket( message );
-		
-		if (ourLiveObject->age > 2) {
+	if (inASCII == slashDieKey || inASCII == toupper(slashDieKey)) { //M
+        if( shiftKey ) {
+            char *message = autoSprintf( "DIE 0 0#" );
+            livingLifePage->sendToServerSocket( message );
+		} else {
 			livingLifePage->lunarForceDisconnect( );
 		}
 	}

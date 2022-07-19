@@ -46,6 +46,10 @@ class Picker : public PageComponent, ActionListener,
 
         virtual void keyDown( unsigned char inASCII );
         virtual void specialKeyDown( int inKeyCode );
+        
+        virtual void focusSearchField();
+        
+        virtual void clearSearchField();
 
         
     protected:

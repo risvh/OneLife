@@ -288,6 +288,18 @@ void Picker::redoSearch( char inClearPageSkip ) {
     }
 
 
+//LunarMod
+void Picker::focusSearchField() {
+    mSearchField.focus();
+    }
+    
+
+//LunarMod    
+void Picker::clearSearchField() {
+    mSearchField.setText( "" );
+    }
+
+
 
 void Picker::addSearchToStack() {
     char *search = mSearchField.getText();

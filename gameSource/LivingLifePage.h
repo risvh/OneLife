@@ -1109,9 +1109,9 @@ class LivingLifePage : public GamePage, public ActionListener {
         char mXKeyDown;
 
         char mPlayerInFlight;
-
+        public: // Lunar mod
         Picker mObjectPicker;
-
+        protected: // Lunar mod
 
         void pushOldHintArrow( int inIndex );
 

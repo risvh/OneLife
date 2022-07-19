@@ -85,6 +85,7 @@ public:
 	static SimpleVector<int> *mMapContainedStacks;
 	static SimpleVector<SimpleVector<int>> *mMapSubContainedStacks;
 	static char* bMap;
+	static bool sayingNOBB;
 
 	static void initOnServerJoin();
 	static void initOnBirth();

@@ -26007,6 +26007,8 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                     vogMode = false;
 					LunarMod::vogMode = false;
                     if( vogPickerOn ) {
+                        TextField::unfocusAll(); //LunarMod
+                        mObjectPicker.clearSearchField(); //LunarMod
                         removeComponent( &mObjectPicker );
                         mObjectPicker.removeActionListener( this );
                         }
@@ -26023,8 +26025,10 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                     mObjectPicker.addActionListener( this );
                     }
                 else {
+                    TextField::unfocusAll(); //LunarMod
+                    mObjectPicker.clearSearchField(); //LunarMod
                     removeComponent( &mObjectPicker );
-                    mObjectPicker.removeActionListener( this );    
+                    mObjectPicker.removeActionListener( this );
                     }
                 vogPickerOn = ! vogPickerOn;
                 }
@@ -26135,7 +26139,20 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                 }
             break;
         case 9: // tab
-            if( mCurrentHintObjectID != 0 ) {
+        
+            // LunarMod
+            if( ! mSayField.isFocused() &&
+                vogMode ) {
+                
+                if( ! vogPickerOn ) {
+                    addComponent( &mObjectPicker );
+                    mObjectPicker.addActionListener( this );
+                    vogPickerOn = true;
+                    }
+                
+                }
+        
+            else if( mCurrentHintObjectID != 0 ) {
                 
                 int num = getNumHints( mCurrentHintObjectID );
                 
