@@ -335,6 +335,10 @@ static char lookTimeDBOpen = false;
  
 static DB db;
 static char dbOpen = false;
+
+
+static DB newdb;
+static char newdbOpen = false;
  
  
 static DB timeDB;
@@ -363,6 +367,9 @@ static char eveDBOpen = false;
  
 static DB metaDB;
 static char metaDBOpen = false;
+
+static DB newmetaDB;
+static char newmetaDBOpen = false;
 
 
 static DB persistentMapDB;
@@ -3047,7 +3054,93 @@ void reseedMap( char inForceFresh ) {
         }
     }
  
- 
+
+int getTweakedBaseMap( int inX, int inY );
+
+static void walkMap() {
+    AppLog::info( "\n ======================== WALKING MAP ======================== \n" );
+   
+    skipTrackingMapChanges = true;
+   
+    DB_Iterator dbi;
+   
+    // AppLog::info( "-1" );
+    DB_Iterator_init( &db, &dbi );
+   
+    unsigned char key[16];
+   
+    unsigned char value[4];
+
+    // AppLog::info( "0" );
+    while( DB_Iterator_next( &dbi, key, value ) > 0 ) {
+
+        int s = valueToInt( &( key[8] ) );
+        // AppLog::info( "1" );
+        int b = valueToInt( &( key[12] ) );
+        // AppLog::info( "2" );
+        int id = valueToInt( value );
+        // AppLog::info( "3" );
+        
+        int metaID = extractMetadataID( id );
+        int finalID = id;
+
+        if( metaID != 0 ) {
+
+            int objID = extractObjectID( id );
+
+            if( metaID < 4000 ) {
+                finalID = objID;
+                }
+            else {
+                finalID = packMetadataID( objID, metaID - 4000 );
+                }
+            
+            intToValue( finalID, value );
+
+            }
+        
+        
+        DB_put( &newdb, key, value );
+
+        }
+   
+    AppLog::info( "\n ====================== DONE WALKING MAP ====================== \n" );
+    }
+
+static void walkMeta() {
+    AppLog::info( "\n ======================== WALKING META ======================== \n" );
+   
+    DB_Iterator dbi;
+   
+    // AppLog::info( "-1" );
+    DB_Iterator_init( &metaDB, &dbi );
+   
+    unsigned char key[4];
+   
+    unsigned char value[MAP_METADATA_LENGTH];
+
+    // AppLog::info( "0" );
+    while( DB_Iterator_next( &dbi, key, value ) > 0 ) {
+
+        int metaID = valueToInt( key );
+
+        if( metaID < 4000 ) {
+            // pass
+            }
+        else {
+            metaID = metaID - 4000;
+
+            intToValue( metaID, key );
+
+            DB_put( &newmetaDB, key, value );
+            }
+
+        }
+   
+    AppLog::info( "\n ====================== DONE WALKING META ====================== \n" );
+    }
+
+
  
  
 char initMap() {
@@ -3624,7 +3717,40 @@ char initMap() {
                          4 // one int, object ID at x,y in slot (s-3)
                            // OR contained count if s=2
                          );
-   
+
+    error = DB_open( &newdb,
+                         "map2.db",
+                         KISSDB_OPEN_MODE_RWCREAT,
+                         80000,
+                         16, // four 32-bit ints, xysb
+                             // s is the slot number
+                             // s=0 for base object
+                             // s=1 decay ETA seconds (wall clock time)
+                             // s=2 for count of contained objects
+                             // s=3 first contained object
+                             // s=4 second contained object
+                             // s=... remaining contained objects
+                             // Then decay ETA for each slot, in order,
+                             //   after that.
+                             // s = -1
+                             //  is a special flag slot set to 0 if NONE
+                             //  of the contained items have ETA decay
+                             //  or 1 if some of the contained items might
+                             //  have ETA decay.
+                             //  (this saves us from having to check each
+                             //   one)
+                             // If a contained object id is negative,
+                             // that indicates that it sub-contains
+                             // other objects in its corresponding b slot
+                             //
+                             // b is for indexing sub-container slots
+                             // b=0 is the main object
+                             // b=1 is the first sub-slot, etc.
+                         4 // one int, object ID at x,y in slot (s-3)
+                           // OR contained count if s=2
+                         );
+
+
     if( error ) {
         AppLog::errorF( "Error %d opening map KissDB", error );
         return false;
@@ -3818,6 +3944,16 @@ char initMap() {
  
     error = DB_open( &metaDB,
                      "meta.db",
+                     KISSDB_OPEN_MODE_RWCREAT,
+                     // starting size doesn't matter here
+                     500,
+                     4, // one 32-bit int as key
+                     // data
+                     MAP_METADATA_LENGTH
+                     );
+
+    error = DB_open( &newmetaDB,
+                     "meta2.db",
                      KISSDB_OPEN_MODE_RWCREAT,
                      // starting size doesn't matter here
                      500,
@@ -4049,8 +4185,9 @@ char initMap() {
         GlobalTriggerState s;
         globalTriggerStates.push_back( s );
         }
- 
- 
+
+walkMeta();
+walkMap();
  
     useTestMap = SettingsManager::getIntSetting( "useTestMap", 0 );
    
