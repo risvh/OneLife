@@ -127,7 +127,15 @@ static double lastVogMoveTime = 0;
 static char vogFollowMode = false;
 static int vogFollowPlayerID = -1;
 
-static char debugMode = false;
+static int debugMode = 0;
+static SimpleVector<char *> debugMessages;
+
+void LivingLifePage::addDebugMessage( char *message ) {
+    debugMessages.push_back( message );
+    if( debugMessages.size() > 30 ) {
+        debugMessages.deallocateStringElement( 0 );
+        }
+    }
 
 static doublePair vogPos = { 0, 0 };
 
@@ -4267,7 +4275,7 @@ LivingLifePage::LivingLifePage()
         }
 
     if( SettingsManager::getIntSetting( "debugInfo", 0 ) ) {
-        debugMode = true;
+        debugMode = 1;
         }
 
     if( SettingsManager::getIntSetting( "coordinatesEnabled", 0 ) ) {
@@ -13733,6 +13741,24 @@ void LivingLifePage::draw( doublePair inViewCenter,
         if( debugLine != NULL ) delete [] debugLine;
         }
 
+    // debug messages on screen
+    if( debugMode == 2 ) {
+        doublePair pos = lastScreenViewCenter;
+        pos.x -= 640 * gui_fov_scale_hud;
+        pos.y += 380 * gui_fov_scale_hud;
+        for( int i=0; i<debugMessages.size(); i++ ) {
+            char *message = debugMessages.getElementDirect(i);
+            pos.x -= 1 * gui_fov_scale_hud;
+            pos.y += 1 * gui_fov_scale_hud;
+            setDrawColor( 0.0, 0.0, 0.0, 1.0 );
+            tinyHandwritingFont->drawString( message, pos, alignLeft );
+            pos.x += 1 * gui_fov_scale_hud;
+            pos.y -= 1 * gui_fov_scale_hud;
+            setDrawColor( 1.0, 1.0, 1.0, 1.0 );
+            tinyHandwritingFont->drawString( message, pos, alignLeft );
+            pos.y -= 24 * gui_fov_scale_hud;
+            }
+        }
     }
 
 
@@ -28549,7 +28575,17 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
             // calcOffsetHUD();
             }
             break;
-        // case 'k':
+        case 'k':
+            if( !TextField::isAnyFocused() ) {
+                if( debugMode == 1 ) {
+                    debugMessages.deallocateStringElements();
+                    debugMode = 2;
+                    }
+                else if( debugMode == 2 ) {
+                    debugMode = 1;
+                    }
+                }
+            break;
         case 'K':
             if( !TextField::isAnyFocused() ) {
                 drawGridToggle = !drawGridToggle;
