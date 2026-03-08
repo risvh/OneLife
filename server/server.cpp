@@ -9582,8 +9582,29 @@ char containmentPermitted( int inContainerID, int inContainedID ) {
                 CategoryRecord *containedCategory = getCategory( containedCID );
                 if( containedCategory == NULL ) continue;
                 int containedPID = containedCategory->parentID;
-                
-                if( isContainmentWithMatchedTags( containerPID, containedPID ) ) return true;
+
+                if( isContainmentWithMatchedTags( containerPID, containedPID ) ) {
+
+                    // in case either category is a containabilitySet
+                    // check that the role of the object in that set matches
+                    // what we have here
+
+                    char isContainer = true;
+                    char isContainee = true;
+
+                    if( containerCategory->isContainabilitySet ) {
+                        int containerIndex = containerCategory->objectIDSet.getElementIndex( inContainerID );
+                        float containerWeight = containerCategory->objectWeights.getElementDirect( containerIndex );
+                        isContainer = containerWeight == 1.0f;
+                    }
+                    if( containedCategory->isContainabilitySet ) {
+                        int containeeIndex = containedCategory->objectIDSet.getElementIndex( inContainedID );
+                        float containeeWeight = containedCategory->objectWeights.getElementDirect( containeeIndex );
+                        isContainee = containeeWeight == 0.0f;
+                    }
+
+                    if( isContainer && isContainee ) return true;
+                }
             }
         }
     } else if ( containerRecord != NULL ) {
