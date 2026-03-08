@@ -870,17 +870,10 @@ void minitech::drawHintObjectTile() {
 vector<TransRecord*> minitech::getUsesTrans(int objId) {
     
     SimpleVector<TransRecord*> *usesTrans = getAllUses( objId );
-    vector<TransRecord*> results;
-    
-    int numTrans = 0;
-    if( usesTrans != NULL ) {
-        numTrans = usesTrans->size();
-    }
-    if( numTrans == 0 ) {
-        return results; 
-    }
+    vector<TransRecord*> temp;
+    if( usesTrans == NULL ) return temp;
 
-    for( int t=0; t<numTrans; t++ ) {
+    for( int t=0; t<usesTrans->size(); t++ ) {
         
         TransRecord *trans = usesTrans->getElementDirect( t );
         
@@ -890,25 +883,66 @@ vector<TransRecord*> minitech::getUsesTrans(int objId) {
         int idD = trans->newTarget;
         
         //parse probabilitySet transitions (e.g. fishing)
-        int cOrD = -1;
-        if ( isProbabilitySet(idC) ) cOrD = 0;
-        if ( isProbabilitySet(idD) ) cOrD = 1;
-        if (cOrD != -1) {
-            CategoryRecord* c;
-            if (cOrD == 0) c = getCategory( idC );
-            if (cOrD == 1) c = getCategory( idD );
+        int cId = -1;
+        if ( isProbabilitySet(idC) ) {
+            cId = idC;
+        } else if ( isProbabilitySet(idD) ) {
+            cId = idD;
+        }
+        if (cId != -1) {
+            CategoryRecord* c = getCategory( cId );
             SimpleVector<int> idSet = c->objectIDSet;
             for (int i=0; i<idSet.size(); i++) {
                 TransRecord* staticTrans = new TransRecord;
                 *staticTrans = *trans;
                 int newId = idSet.getElementDirect(i);
-                if (cOrD == 0) staticTrans->newActor = newId;
-                if (cOrD == 1) staticTrans->newTarget = newId;
-                results.push_back(staticTrans);
+                // if (staticTrans->actor == cId) staticTrans->actor = newId;
+                // if (staticTrans->target == cId) staticTrans->target = newId;
+                if (staticTrans->newActor == cId) staticTrans->newActor = newId;
+                if (staticTrans->newTarget == cId) staticTrans->newTarget = newId;
+
+                temp.push_back(staticTrans);
             }
             continue;
         }
         
+        temp.push_back(trans);
+
+    }
+
+    // int numCategoriesForObject = getNumCategoriesForObject( objId );
+    // for (int i=0; i<numCategoriesForObject; i++) {
+    //     int cId = getCategoryForObject(objId, i);
+    //     CategoryRecord* c = getCategory( cId );
+
+    //     if (c->isProbabilitySet) {
+    //         SimpleVector<TransRecord*> *usePTrans = getAllUses( cId );
+    //         int numPTrans = 0;
+    //         if( usePTrans != NULL ) {
+    //             numPTrans = usePTrans->size();
+    //         }
+    //         for( int t=0; t<numPTrans; t++ ) {
+    //             TransRecord* staticTrans = new TransRecord;
+    //             *staticTrans = *(usePTrans->getElementDirect( t ));
+                
+    //             if (staticTrans->actor == cId) staticTrans->actor = objId;
+    //             if (staticTrans->target == cId) staticTrans->target = objId;
+    //             if (staticTrans->newActor == cId) staticTrans->newActor = objId;
+    //             if (staticTrans->newTarget == cId) staticTrans->newTarget = objId;
+                
+    //             temp.push_back(staticTrans);
+    //         }
+    //     }
+    // }
+
+    vector<TransRecord*> results;
+    for( int t=0; t<temp.size(); t++ ) {
+        TransRecord *trans = temp[t];
+        int idA = trans->actor;
+        int idB = trans->target;
+        int idC = trans->newActor;
+        int idD = trans->newTarget;
+
         //Skip useDummy when not holding them (e.g. holding bowl, skip bucket of water useDummies, only keep first and last use)
         if ( isUseDummyAndNotLastUse(idA) && isUseDummyAndNotLastUse(idC) && idA != objId ) continue;
         if ( isUseDummyAndNotLastUse(idB) && isUseDummyAndNotLastUse(idD) && idB != objId ) continue;
@@ -930,9 +964,8 @@ vector<TransRecord*> minitech::getUsesTrans(int objId) {
         
         //Skip transitions that involve uncraftable objects
         if ( !showUncraftables && (isUncraftable(idA) || isUncraftable(idB) || isUncraftable(idC) || isUncraftable(idD)) ) continue;
-        
-        results.push_back(trans);
 
+        results.push_back(trans);
     }
     
     return results;
@@ -941,14 +974,10 @@ vector<TransRecord*> minitech::getUsesTrans(int objId) {
 vector<TransRecord*> minitech::getProdTrans(int objId) {
     
     SimpleVector<TransRecord*> *prodTrans = getAllProduces( objId );
-    vector<TransRecord*> results;
-    
-    int numTrans = 0;
-    if( prodTrans != NULL ) {
-        numTrans = prodTrans->size();
-    }
+    vector<TransRecord*> temp;
+    if( prodTrans == NULL ) return temp;
 
-    for( int t=0; t<numTrans; t++ ) {
+    for( int t=0; t<prodTrans->size(); t++ ) {
         
         TransRecord *trans = prodTrans->getElementDirect( t );
         
@@ -958,26 +987,66 @@ vector<TransRecord*> minitech::getProdTrans(int objId) {
         int idD = trans->newTarget;
 
         //parse probabilitySet transitions (e.g. the only transitin making Pond with Dead Goose has a probSet as newActor)
-        int cOrD = -1;
-        if ( isProbabilitySet(idC) ) cOrD = 0;
-        if ( isProbabilitySet(idD) ) cOrD = 1;
-        if (cOrD != -1) {
-            CategoryRecord* c;
-            if (cOrD == 0) c = getCategory( idC );
-            if (cOrD == 1) c = getCategory( idD );
+        int cId = -1;
+        if ( isProbabilitySet(idC) ) {
+            cId = idC;
+        } else if ( isProbabilitySet(idD) ) {
+            cId = idD;
+        }
+        if (cId != -1) {
+            CategoryRecord* c = getCategory( cId );
             SimpleVector<int> idSet = c->objectIDSet;
             for (int i=0; i<idSet.size(); i++) {
                 TransRecord* staticTrans = new TransRecord;
                 *staticTrans = *trans;
                 int newId = idSet.getElementDirect(i);
-                if (cOrD == 0) staticTrans->newActor = newId;
-                if (cOrD == 1) staticTrans->newTarget = newId;
-                if( staticTrans->newActor == objId || staticTrans->newTarget == objId )
-                    results.push_back(staticTrans);
+                // if (staticTrans->actor == cId) staticTrans->actor = newId;
+                // if (staticTrans->target == cId) staticTrans->target = newId;
+                if (staticTrans->newActor == cId) staticTrans->newActor = newId;
+                if (staticTrans->newTarget == cId) staticTrans->newTarget = newId;
+
+                temp.push_back(staticTrans);
             }
             continue;
         }
         
+        temp.push_back(trans);
+
+    }
+
+    // int numCategoriesForObject = getNumCategoriesForObject( objId );
+    // for (int i=0; i<numCategoriesForObject; i++) {
+    //     int cId = getCategoryForObject(objId, i);
+    //     CategoryRecord* c = getCategory( cId );
+
+    //     if (c->isProbabilitySet) {
+    //         SimpleVector<TransRecord*> *prodPTrans = getAllProduces( cId );
+    //         int numPTrans = 0;
+    //         if( prodPTrans != NULL ) {
+    //             numPTrans = prodPTrans->size();
+    //         }
+    //         for( int t=0; t<numPTrans; t++ ) {
+    //             TransRecord* staticTrans = new TransRecord;
+    //             *staticTrans = *(prodPTrans->getElementDirect( t ));
+                
+    //             if (staticTrans->actor == cId) staticTrans->actor = objId;
+    //             if (staticTrans->target == cId) staticTrans->target = objId;
+    //             if (staticTrans->newActor == cId) staticTrans->newActor = objId;
+    //             if (staticTrans->newTarget == cId) staticTrans->newTarget = objId;
+                
+    //             temp.push_back(staticTrans);
+    //         }
+    //     }
+    // }
+    
+    vector<TransRecord*> results;
+    for( int t=0; t<temp.size(); t++ ) {
+        TransRecord *trans = temp[t];
+        int idA = trans->actor;
+        int idB = trans->target;
+        int idC = trans->newActor;
+        int idD = trans->newTarget;
+
         //Skip the use of the object which returns the object itself (e.g. sharp stone on branches)
         if ( idA == objId || idB == objId ) continue;
         //Skip useDummy when not holding them (e.g. holding bowl, skip bucket of water useDummies, only keep first and last use)
@@ -1003,34 +1072,8 @@ vector<TransRecord*> minitech::getProdTrans(int objId) {
         
         //Strangely there are results that do not make the object at all e.g. bowl of water, reason unknown yet
         if (idC != objId && idD != objId) continue;
-        
-        results.push_back(trans);
 
-    }
-    
-    int numCategoriesForObject = getNumCategoriesForObject( objId );
-    for (int i=0; i<numCategoriesForObject; i++) {
-        int cId = getCategoryForObject(objId, i);
-        CategoryRecord* c = getCategory( cId );
-        
-        if (c->isProbabilitySet) {
-            SimpleVector<TransRecord*> *prodPTrans = getAllProduces( cId );
-            int numPTrans = 0;
-            if( prodPTrans != NULL ) {
-                numPTrans = prodPTrans->size();
-            }
-            for( int t=0; t<numPTrans; t++ ) {
-                TransRecord* staticTrans = new TransRecord;
-                *staticTrans = *(prodPTrans->getElementDirect( t ));
-                
-                if (staticTrans->actor == cId) staticTrans->actor = objId;
-                if (staticTrans->target == cId) staticTrans->target = objId;
-                if (staticTrans->newActor == cId) staticTrans->newActor = objId;
-                if (staticTrans->newTarget == cId) staticTrans->newTarget = objId;
-                
-                results.push_back(staticTrans);
-            }
-        }
+        results.push_back(trans);
     }
     
     return results;
