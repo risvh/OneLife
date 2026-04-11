@@ -8407,10 +8407,10 @@ int processLoggedInPlayer( char inAllowReconnect,
             }
         }
     
-    if ( SettingsManager::getIntSetting( "randomisePlayersObject", 0 ) ) {
+    if ( inForceDisplayID == -1 && SettingsManager::getIntSetting( "randomisePlayersObject", 0 ) ) {
         SimpleVector<int> *objectsPool =
             SettingsManager::getIntSettingMulti( "randomisePlayersObjectPool" );
-        ObjectRecord *randomObject;
+        ObjectRecord *randomObject = NULL;
         int randomObjectIndex;
         int objectPoolSize = objectsPool->size();
         while ( randomObject == NULL ) {
