@@ -237,6 +237,8 @@ void loadFovSettings() {
         SettingsManager::setSetting( "fovScaleHUD", gui_fov_target_scale_hud );
         }
 
+    // don't apply fovFixedScale here
+    // login page and loading page requires zoom = 1.0
     gui_fov_scale = 1.0f;
 
     gui_fov_scale_hud = gui_fov_scale / gui_fov_target_scale_hud;

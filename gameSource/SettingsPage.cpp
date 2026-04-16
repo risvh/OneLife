@@ -29,6 +29,7 @@ extern int targetFramesPerSecond;
 
 extern bool showingInGameSettings;
 
+extern float gui_fov_scale_before_settings;
 extern float gui_fov_target_scale_hud;
 
 // defined in LivingLifePage.cpp
@@ -73,6 +74,9 @@ SettingsPage::SettingsPage()
 
           // Gameplay
           mEnableFOVBox( 561, 128, 4 ),
+          mFOVSlider( mainFont, 601, 128, 4, 200, 30,
+                                       1.0, 10.0, 
+                                       "" ),
           mEnableCenterCameraBox( 561, 52, 4 ),
           mEnableNudeBox( -335, 148, 4 ),
           mUISizeSlider( mainFont, -335, 148, 4, 200, 30,
@@ -253,6 +257,8 @@ SettingsPage::SettingsPage()
     mEnableNudeBox.addActionListener( this );
     addComponent( &mEnableCenterCameraBox );
     mEnableCenterCameraBox.addActionListener( this );
+    addComponent( &mFOVSlider );
+    mFOVSlider.addActionListener( this );
     addComponent( &mEnableFOVBox );
     mEnableFOVBox.addActionListener( this );
     
@@ -322,6 +328,7 @@ SettingsPage::SettingsPage()
     mBackButton.setCursorTip( "GO BACK" );
     
     mEnableFOVBox.setCursorTip( "ENABLE ZOOM-IN AND ZOOM-OUT WITH MOUSE WHEEL SCROLLING" );
+    mFOVSlider.setCursorTip( "FIXED LEVEL OF ZOOM" );
     mEnableCenterCameraBox.setCursorTip( "ALWAYS CENTER THE CAMERA VIEW ON YOUR CHARACTER" );
     mEnableNudeBox.setCursorTip( "ENABLE NUDITY" );
     
@@ -647,8 +654,17 @@ void SettingsPage::actionPerformed( GUIComponent *inTarget ) {
         }
     else if( inTarget == &mEnableFOVBox ) {
         int newSetting = mEnableFOVBox.getToggled();
-        
         SettingsManager::setSetting( "fovEnabled", newSetting );
+        if( !newSetting ) {
+            mFOVSlider.setValue( gui_fov_scale_before_settings );
+            SettingsManager::setSetting( "fovFixedScale", gui_fov_scale_before_settings );
+            }
+        }
+    else if( inTarget == &mFOVSlider ) {
+        // change the value in increments of 0.25
+        float newSetting = round(mFOVSlider.getValue() * 4.0f) / 4.0f;
+        mFOVSlider.setValue( newSetting );
+        SettingsManager::setSetting( "fovFixedScale", newSetting );
         }
     else if( inTarget == &mEnableKActionsBox ) {
         int newSetting = mEnableKActionsBox.getToggled();
@@ -1107,13 +1123,22 @@ void SettingsPage::draw( doublePair inViewCenter,
             }
         }
     
+    if( mFOVSlider.isVisible() ) {
+        doublePair pos = mFOVSlider.getPosition();
+        
+        pos.x -= 60;
+        pos.y = mFOVSlider.getPosition().y;
+        pos.y -= 2;
+
+        drawTextWithShadow( "FIXED ZOOM LEVEL", pos, alignRight );
+        }
     if( mEnableFOVBox.isVisible() ) {
         doublePair pos = mEnableFOVBox.getPosition();
-        
+
         pos.x -= 30;
         pos.y -= 2;
 
-        drawTextWithShadow( "ENABLE ZOOM", pos, alignRight );
+        drawTextWithShadow( "WHEEL ZOOM", pos, alignRight );
         }
     
     if( mEnableKActionsBox.isVisible() ) {
@@ -1354,6 +1379,13 @@ void SettingsPage::makeActive( char inFresh ) {
         mMusicStartTime = 0;
 
         mUISizeSlider.setValue( 1 / gui_fov_target_scale_hud );
+        
+        if ( SettingsManager::getIntSetting( "fovEnabled", 0 ) ) {
+            mFOVSlider.setValue( gui_fov_scale_before_settings );
+            }
+        else {
+            mFOVSlider.setValue( SettingsManager::getFloatSetting( "fovFixedScale", 1.0f ) );
+            }
 
         mEnableAlwaysShowPlayerLabelsBox.setToggled( alwaysShowPlayerLabelEnabled );
         
@@ -1399,6 +1431,7 @@ void SettingsPage::updatePage() {
     double lineSpacing = 52;
     
     mEnableFOVBox.setPosition( 0, lineSpacing * 4 );
+    mFOVSlider.setPosition( 308, lineSpacing * 4 );
     mEnableCenterCameraBox.setPosition( 0, lineSpacing * 3 );
     mEnableNudeBox.setPosition( 0, lineSpacing * 2 );
     mUISizeSlider.setPosition( 28, lineSpacing * 1 );
@@ -1452,6 +1485,7 @@ void SettingsPage::updatePage() {
     mEnableAlwaysShowPlayerLabelsBox.setPosition(0, lineSpacing * -5);
     
     mEnableFOVBox.setVisible( mPage == 0 );
+    mFOVSlider.setVisible( mPage == 0 && !mEnableFOVBox.getToggled() );
     mEnableCenterCameraBox.setVisible( mPage == 0 );
     mEnableNudeBox.setVisible( mPage == 0 );
     mUISizeSlider.setVisible( mPage == 0 );

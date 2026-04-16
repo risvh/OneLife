@@ -17841,6 +17841,12 @@ void LivingLifePage::step() {
                     
                     minitech::changeScale( 1.25 * gui_fov_scale_hud );
                     minitech::initOnBirth();
+
+                    if ( ! SettingsManager::getIntSetting( "fovEnabled", 0 ) ) {
+                        // apply zoom level here
+                        // because we need default zoom level in Loading screen
+                        changeFOV( SettingsManager::getFloatSetting( "fovFixedScale", 1.0f ) );
+                        }
                     
                     newbieTips::drawTipsArrow = false;
                     
@@ -24687,11 +24693,16 @@ void LivingLifePage::makeActive( char inFresh ) {
 
     if( !inFresh ) {
     
-        // reset fov to default when we return from settings page
-        // and we just turned off fov
         if ( ! SettingsManager::getIntSetting( "fovEnabled", 0 ) ) {
-          changeFOV( 1.0f );
-          }
+            // if we turn off mousewheel zooming
+            // then update zoom level according to the specified fixed level
+            changeFOV( SettingsManager::getFloatSetting( "fovFixedScale", 1.0f ) );
+            }
+        else {
+            // otherwise, reset zoom level to default
+            changeFOV( 1.0 );
+            }
+
       
         //reset camera if LivingLifePage is made active again
         LiveObject *ourLiveObject = getOurLiveObject();
