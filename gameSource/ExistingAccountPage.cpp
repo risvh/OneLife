@@ -967,7 +967,6 @@ void ExistingAccountPage::pointerUp( float inX, float inY ) {
         }
     if( mSpawnSeed.isVisible() && !mSpawnSeed.isMouseOver() ) {
         if( !seedUIElementsClicked ) { // NOT unlock button clicked
-            seedFieldLockedMode = 0;
             mSpawnSeed.unfocus();
             updatefieldsAndLockButtons();
             }
