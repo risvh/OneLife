@@ -1263,13 +1263,13 @@ float initObjectBankStep() {
 
 
 
-                r->containOffsetX = 0;
-                r->containOffsetY = 0;
+                r->containOffset.x = 0;
+                r->containOffset.y = 0;
                             
                 if( strstr( lines[next], "containOffset=" ) != NULL ) {
-                    sscanf( lines[next], "containOffset=%d,%d", 
-                            &( r->containOffsetX ),
-                            &( r->containOffsetY ) );
+                    sscanf( lines[next], "containOffset=%lf,%lf", 
+                            &( r->containOffset.x ),
+                            &( r->containOffset.y ) );
                                 
                     next++;
                     }
@@ -2806,8 +2806,7 @@ int reAddObject( ObjectRecord *inObject,
                         inObject->foodValue,
                         inObject->bonusValue,
                         inObject->speedMult,
-                        inObject->containOffsetX,
-                        inObject->containOffsetY,
+                        inObject->containOffset,
                         inObject->heldOffset,
                         inObject->clothing,
                         inObject->clothingOffset,
@@ -3156,8 +3155,7 @@ int addObject( const char *inDescription,
                int inFoodValue,
                int inBonusValue,
                float inSpeedMult,
-               int inContainOffsetX,
-               int inContainOffsetY,
+               doublePair inContainOffset,
                doublePair inHeldOffset,
                char inClothing,
                doublePair inClothingOffset,
@@ -3396,9 +3394,9 @@ int addObject( const char *inDescription,
         
         lines.push_back( autoSprintf( "speedMult=%f", inSpeedMult ) );
 
-        if( inContainOffsetX != 0 || inContainOffsetY != 0 )
-        lines.push_back( autoSprintf( "containOffset=%d,%d",
-                                      inContainOffsetX, inContainOffsetY ) );
+        if( inContainOffset.x != 0 || inContainOffset.y != 0 )
+        lines.push_back( autoSprintf( "containOffset=%f,%f",
+                                      inContainOffset.x, inContainOffset.y ) );
 
         lines.push_back( autoSprintf( "heldOffset=%f,%f",
                                       inHeldOffset.x, inHeldOffset.y ) );
@@ -3825,8 +3823,7 @@ int addObject( const char *inDescription,
 
     
     r->speedMult = inSpeedMult;
-    r->containOffsetX = inContainOffsetX;
-    r->containOffsetY = inContainOffsetY;
+    r->containOffset = inContainOffset;
     r->heldOffset = inHeldOffset;
     r->clothing = inClothing;
     r->clothingOffset = inClothingOffset;
@@ -6675,8 +6672,8 @@ doublePair computeContainedCenterOffset( ObjectRecord *inContainerObject,
     // instead of inside getObjectCenterOffset and getObjectBottomCenterOffset
     // so the offsets won't interfere with heldPos
     // (heldPos uses getObjectCenterOffset)
-    centerOffset.x += inContainedObject->containOffsetX;
-    centerOffset.y += inContainedObject->containOffsetY;
+    centerOffset.x += inContainedObject->containOffset.x;
+    centerOffset.y += inContainedObject->containOffset.y;
         
     return centerOffset;
         
