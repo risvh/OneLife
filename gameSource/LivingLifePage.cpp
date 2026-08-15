@@ -3985,7 +3985,7 @@ void LivingLifePage::takeOffClothing() {
     
     // If holding clothing, put it on
     if (ourLiveObject->holdingID > 0) {
-        ObjectRecord *held = getObject(ourLiveObject->holdingID);
+        // ObjectRecord *held = getObject(ourLiveObject->holdingID);
 
         // if held object is not wearable
         // if (!held || held->clothing == 'n') return;
