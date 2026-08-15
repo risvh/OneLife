@@ -322,7 +322,7 @@ bool minitech::isCategory(int objId) {
 
 minitech::mouseListener* minitech::getMouseListenerByArea( 
     vector<mouseListener*>* listeners, doublePair posTL, doublePair posBR ) {
-    for (int i=0; i<(int)listeners->size(); i++) {
+    for (size_t i=0; i<listeners->size(); i++) {
         if (
             posEqual( (*listeners)[i]->posTL, posTL) &&
             posEqual( (*listeners)[i]->posBR, posBR)
@@ -754,7 +754,7 @@ void minitech::drawStr(
     doublePair screenCenter = livingLifePage->minitechGetLastScreenViewCenter();
     
     char sBuf[96];
-    sprintf( sBuf, "%s", str.c_str() );
+    snprintf( sBuf, sizeof(sBuf), "%s", str.c_str() );
     float textWidth = 0;
     if (font == "handwritten") {
         textWidth = handwritingFont->measureString( sBuf );
@@ -1084,7 +1084,7 @@ vector<TransRecord*> minitech::sortUsesTrans(vector<TransRecord*> unsortedTrans)
     vector<bool> boolCloseVect = getObjIsCloseVector();
     vector<float> rankScores(unsortedTrans.size(), 0);
     
-    for ( int i=0; i<(int)unsortedTrans.size(); i++ ) {
+    for ( size_t i=0; i<unsortedTrans.size(); i++ ) {
         TransRecord *trans = unsortedTrans[i];
         
         int idA = trans->actor;
@@ -1148,7 +1148,7 @@ vector<TransRecord*> minitech::sortProdTrans(vector<TransRecord*> unsortedTrans)
     vector<bool> boolCloseVect = getObjIsCloseVector();
     vector<float> rankScores(unsortedTrans.size(), 0);
     
-    for ( int i=0; i<(int)unsortedTrans.size(); i++ ) {
+    for ( size_t i=0; i<unsortedTrans.size(); i++ ) {
         TransRecord *trans = unsortedTrans[i];
         
         int idA = trans->actor;
@@ -2022,7 +2022,7 @@ void minitech::drawIconOnHoverTips() {
     float iconSize = 76.0/2 *guiScale;
     float iconCaptionYOffset = - iconSize/2;
     float tinyLineHeight = 12.0 *guiScale;
-    for (int i=0; i<(int)iconListenerIds.size(); i++) {
+    for (size_t i=0; i<iconListenerIds.size(); i++) {
         mouseListener* listener = iconListenerIds[i].first;
         int id = iconListenerIds[i].second;
         doublePair iconLT = add(listener->posTL, screenPos);
@@ -2530,7 +2530,7 @@ bool minitech::livingLifePageMouseDown( float mX, float mY ) {
     doublePair mousePosScreenAdj = sub(mousePos, screenPos);
     
     bool clickCaught = false;
-    for ( int i=0; i<(int)twotechMouseListeners.size(); i++ ) {
+    for ( size_t i=0; i<twotechMouseListeners.size(); i++ ) {
         mouseListener* listener = twotechMouseListeners[i];
         if ( posWithinArea(mousePosScreenAdj, listener->posTL, listener->posBR) ) {
             listener->mouseClick = true;
