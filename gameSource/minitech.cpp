@@ -2364,10 +2364,12 @@ void minitech::livingLifeDraw(float mX, float mY) {
         }
         listener->mouseHover = false;
         
-        if ( !listener->mouseHover && !listener->mouseClick ) {
-            if( listener != NULL ) delete listener;
-            twotechMouseListeners.erase( twotechMouseListeners.begin() + i );
-        }
+		if ( !listener->mouseHover && !listener->mouseClick ) {
+			delete listener;
+			twotechMouseListeners.erase( twotechMouseListeners.begin() + i );
+			if (prevListener == listener) prevListener = NULL;
+			if (nextListener == listener) nextListener = NULL;
+		}
     }
     
     // if ( prevListener != NULL ) {
