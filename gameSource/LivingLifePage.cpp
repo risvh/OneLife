@@ -3767,7 +3767,6 @@ static void addNewAnim( LiveObject *inObject, AnimType inNewAnim ) {
 // queue it here
 static char *nextActionMessageToSend = NULL;
 static char nextActionEating = false;
-static char nextActionDropping = false;
 
 
 // block move until next PLAYER_UPDATE received after action sent
@@ -3828,9 +3827,32 @@ void LivingLifePage::setNextActionMessage(const char* msg, int x, int y) {
     playerActionTargetX = x;
     playerActionTargetY = y;
     playerActionTargetNotAdjacent = true;
-    nextActionDropping = false;
     nextActionEating = false;
     nextActionMessageToSend = autoSprintf( "%s", msg );
+}
+
+static bool pendingDropAcknowledgement;
+
+bool LivingLifePage::nextActionIs(const char *action) {
+	if (nextActionMessageToSend == NULL)
+		return false;
+
+	size_t len = strlen(action);
+
+	return    strncmp(nextActionMessageToSend, action, len) == 0
+		   && (nextActionMessageToSend[len] == 0 || nextActionMessageToSend[len] == ' ');
+}
+
+void LivingLifePage::onDropSent() {
+	pendingDropAcknowledgement = true;
+}
+
+void LivingLifePage::onHoldingChange(int previous, int current) {
+	/* We can't just check for current == 0 because dropping into a bp/pocket
+	 * swaps. This isn't perfect, since it's possible we're seeing a PU from
+	 * a past action if there's enough lag; if the server doesn't coalesce
+	 * updates, this could potentially be improved by making this a counter. */
+	pendingDropAcknowledgement = false;
 }
 
 int LivingLifePage::getObjId( int tileX, int tileY ) {
@@ -3918,19 +3940,25 @@ void LivingLifePage::useBackpack(bool replace) {
     int x, y;
     setOurSendPosXY(x, y);
 
-    char msg[32];
+    char msg[32] = "";
+
     if( ourLiveObject->holdingID > 0 ) {
         if (replace) {
             sprintf( msg, "DROP %d %d %d#", x, y, clothingSlot );
-        } else {
-            sprintf( msg, "SELF %d %d %d#", x, y, clothingSlot );
-        }
-        setNextActionMessage( msg, x, y );
-        nextActionDropping = true;
+		} else {
+			/* If this SELF message is sent without an item in hand (from the
+			 * server's perspective!) the bp is taken into hand. */
+			if (!pendingDropAcknowledgement) {
+				sprintf( msg, "SELF %d %d %d#", x, y, clothingSlot );
+			}
+		}
     } else {
         sprintf( msg, "SREMV %d %d %d %d#", x, y, clothingSlot, -1 );
-        setNextActionMessage( msg, x, y );
-    }
+	}
+
+	if (msg[0] != 0) {
+		setNextActionMessage( msg, x, y );
+	}
 }
 
 void LivingLifePage::usePocket(int clothingID) {
@@ -3943,7 +3971,6 @@ void LivingLifePage::usePocket(int clothingID) {
     if( ourLiveObject->holdingID > 0 ) {
         sprintf( msg, "DROP %d %d %d#", x, y, clothingID );
         setNextActionMessage( msg, x, y );
-        nextActionDropping = true;
     } else {
         sprintf( msg, "SREMV %d %d %d %d#", x, y, clothingID, -1 );
         setNextActionMessage( msg, x, y );
@@ -19228,6 +19255,8 @@ void LivingLifePage::step() {
                                 r->temporaryExpireETA = 
                                     game_getCurrentTime() + 30;
                                 }
+                            
+                            onHoldingChange(existing->holdingID, o.holdingID);
                             }
                         
                         
@@ -24202,6 +24231,9 @@ void LivingLifePage::step() {
             ourLiveObject->pendingActionAnimationStartTime = 
                 game_getCurrentTime();
 
+            if (nextActionIs("DROP")) {
+                onDropSent();
+            }
 
             if( nextActionEating ) {
                 // don't play eating sound here until 
@@ -26466,8 +26498,6 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
 
     nextActionEating = false;
-    nextActionDropping = false;
-    
 
 
     if ( !mForceGroundClick && mouseButton == MouseButton::MIDDLE ) {
@@ -26529,7 +26559,6 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                         autoSprintf( "DROP %d %d %d#",
                                      sendX( clickDestX ), sendY( clickDestY ), 
                                      p.hitClothingIndex  );
-                    nextActionDropping = true;
                     printf( "Add to own clothing container\n" );
                     }
                 else {
@@ -27313,11 +27342,9 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 
                 if( ourLiveObject->holdingID != 0 ) {
                     action = "DROP";
-                    nextActionDropping = true;
                     }
                 else {
                     action = "USE";
-                    nextActionDropping = false;
                     }
                 
                 send = true;
@@ -27460,7 +27487,6 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                      getNumContainerSlots( destID ) > 0 &&
                      destNumContained <= getNumContainerSlots( destID ) ) {
                 action = "DROP";
-                nextActionDropping = true;
                 send = true;
                 }
             else if( modClick && ourLiveObject->holdingID != 0 &&
@@ -27469,7 +27495,6 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                      ! targetIsTrulyPermanent
                      ) {
                 action = "DROP";
-                nextActionDropping = true;
                 send = true;
                 }
             else if( destID != 0 ) {
@@ -27526,7 +27551,6 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             
             if( strcmp( action, "DROP" ) == 0 ) {
                 delete [] extra;
-                nextActionDropping = true;
                 extra = stringDuplicate( " -1" );
                 }
 
@@ -29564,7 +29588,6 @@ void LivingLifePage::actionBetaRelativeToMe( int x, int y ) {
     else if (remove) sprintf( msg, "REMV %d %d -1#", x, y);
     else sprintf( msg, "DROP %d %d -1#", x, y);
     setNextActionMessage( msg, x, y );
-    if (!remove) nextActionDropping = true;
 }
 
 void LivingLifePage::useTileRelativeToMe( int x, int y ) {
