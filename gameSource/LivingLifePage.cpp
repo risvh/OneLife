@@ -3933,7 +3933,7 @@ void LivingLifePage::useBackpack(bool replace) {
     }
 }
 
-void LivingLifePage::usePocket(int clothingID, bool replace) {
+void LivingLifePage::usePocket(int clothingID) {
     LiveObject *ourLiveObject = getOurLiveObject();
     
     int x, y;
@@ -3941,11 +3941,7 @@ void LivingLifePage::usePocket(int clothingID, bool replace) {
 
     char msg[32];
     if( ourLiveObject->holdingID > 0 ) {
-        if (replace) {
-            sprintf( msg, "DROP %d %d %d#", x, y, clothingID );
-        } else {
-            sprintf( msg, "SELF %d %d %d#", x, y, clothingID );
-        }
+        sprintf( msg, "DROP %d %d %d#", x, y, clothingID );
         setNextActionMessage( msg, x, y );
         nextActionDropping = true;
     } else {
@@ -28130,17 +28126,12 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                 takeOffBackpack();
                 return;
             }
-            if (shiftKey && !commandKey && isCharKey(inASCII, charKey_Pocket)) {
+            if (shiftKey && isCharKey(inASCII, charKey_Pocket)) {
                 usePocket(1);
                 return;
             }
-            if (!shiftKey && !commandKey && isCharKey(inASCII, charKey_Pocket)) {
+            if (!shiftKey && isCharKey(inASCII, charKey_Pocket)) {
                 usePocket(4);
-                return;
-            }
-            if (commandKey && isCharKey(inASCII, charKey_Pocket)) {
-                if(shiftKey) usePocket(0, true);
-                if(!shiftKey) usePocket(0);
                 return;
             }
         }
