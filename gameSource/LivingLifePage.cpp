@@ -3972,7 +3972,11 @@ void LivingLifePage::usePocket(int clothingID, bool replace) {
         if (replace) {
             sprintf( msg, "DROP %d %d %d#", x, y, clothingID );
         } else {
-            sprintf( msg, "SELF %d %d %d#", x, y, clothingID );
+			/* If this SELF message is sent without an item in hand (from the
+			 * server's perspective!) the bp is taken into hand. */
+			if (!pendingDropAcknowledgement) {
+                sprintf( msg, "SELF %d %d %d#", x, y, clothingID );
+            }
         }
         setNextActionMessage( msg, x, y );
     } else {
