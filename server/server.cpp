@@ -2434,20 +2434,11 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
     else if( strcmp( nameBuffer, "SELF" ) == 0 ) {
         m.type = SELF;
 
-        // abusing the c field here for extra parameter
-        // 0 means old behavior
-        // -1 means remove clothing content only
-        // -2 means transform clothing only e.g. remove sword from backpack
-        // -3 means remove clothing only
-
         numRead = sscanf( inMessage, 
-                          "%99s %d %d %d %d", 
-                          nameBuffer, &( m.x ), &( m.y ), &( m.i ), &( m.c ) );
+                          "%99s %d %d %d", 
+                          nameBuffer, &( m.x ), &( m.y ), &( m.i ) );
         
-        if( numRead == 4 ) {
-            m.c = 0;
-            }
-        else if( numRead != 5 ) {
+        if( numRead != 4 ) {
             m.type = UNKNOWN;
             }
         }
@@ -20443,10 +20434,7 @@ int main() {
                                 
 
                                 if( targetPlayer == nextPlayer &&
-                                    bareHandClothingTrans != NULL &&
-                                    m.c != -1 && // player only wants clothing content
-                                    m.c != -3 // player only wants the clothing itself
-                                    ) {
+                                    bareHandClothingTrans != NULL ) {
                                     
                                     // bare hand transforms clothing
                                     
@@ -20484,10 +20472,7 @@ int main() {
                                             deleteAll();
                                         }
                                     }
-                                else if( clothingSlot != NULL &&
-                                         m.c != -1 && // player only wants clothing content
-                                         m.c != -2 // player only wants to transform clothing
-                                         ) {
+                                else if( clothingSlot != NULL ) {
                                     // bare hand removes clothing
                                     
                                     removeClothingToHold( nextPlayer,
@@ -21042,10 +21027,7 @@ int main() {
                         
                         if( nextPlayer->holdingID == 0 && 
                             m.c >= 0 && m.c < NUM_CLOTHING_PIECES  &&
-                            ! worked &&
-                            // -2 means player only wants clothing content
-                            m.i != -2
-                            ) {
+                            ! worked ) {
 
                             // hmm... nothing to remove from slots in clothing
                             

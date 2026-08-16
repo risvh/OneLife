@@ -3921,14 +3921,14 @@ void LivingLifePage::useBackpack(bool replace) {
     char msg[32];
     if( ourLiveObject->holdingID > 0 ) {
         if (replace) {
-            sprintf( msg, "DROP %d %d %d#", x, y, clothingSlot ); // SWAP
+            sprintf( msg, "DROP %d %d %d#", x, y, clothingSlot );
         } else {
-            sprintf( msg, "SELF %d %d %d -1#", x, y, clothingSlot ); // PUT IN
+            sprintf( msg, "SELF %d %d %d#", x, y, clothingSlot );
         }
         setNextActionMessage( msg, x, y );
         nextActionDropping = true;
     } else {
-        sprintf( msg, "SREMV %d %d %d %d#", x, y, clothingSlot, -2 ); // TAKE OUT
+        sprintf( msg, "SREMV %d %d %d %d#", x, y, clothingSlot, -1 );
         setNextActionMessage( msg, x, y );
     }
 }
@@ -4015,14 +4015,11 @@ void LivingLifePage::takeOffClothing() {
     return;
 }
 
-void LivingLifePage::takeOffBackpack(int useOrRemove) {
+void LivingLifePage::takeOffBackpack() {
     LiveObject *ourLiveObject = getOurLiveObject();
     
     char message[32];
-    int extraFlag = 0;
-    if( useOrRemove == 1 ) extraFlag = -2;
-    if( useOrRemove == 2 ) extraFlag = -3;
-    sprintf(message, "SELF %i %i 5 %d#", ourLiveObject->xd, ourLiveObject->yd, extraFlag);
+    sprintf(message, "SELF %i %i 5#", ourLiveObject->xd, ourLiveObject->yd);
     sendToServerSocket( message );
 }
 
@@ -28129,14 +28126,8 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                 pickUpBabyInRange();
                 return;
             }
-            if (isCharKey(inASCII, charKey_TakeOffBackpack)) {
-                if( !commandKey && !shiftKey ) takeOffBackpack();
-                else if( !commandKey && shiftKey ) takeOffBackpack(1);
-                else takeOffBackpack(2);
-                return;
-            }
-            if (!commandKey && shiftKey && isCharKey(inASCII, charKey_TakeOffBackpack)) {
-                takeOffBackpack(true);
+            if (!commandKey && !shiftKey && isCharKey(inASCII, charKey_TakeOffBackpack)) {
+                takeOffBackpack();
                 return;
             }
             if (shiftKey && !commandKey && isCharKey(inASCII, charKey_Pocket)) {
