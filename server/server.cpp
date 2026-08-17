@@ -19388,10 +19388,7 @@ int main() {
                                                 }
                                             handleHoldingChange( nextPlayer,
                                                                  r->newActor );
-                                            
-                                            setHeldGraveOrigin( nextPlayer, 
-                                                                m.x, m.y,
-                                                                resultID );
+                                                                 
                                             }
                                         else {
                                             // changing floor to non-floor
@@ -19411,9 +19408,7 @@ int main() {
                                                 handleHoldingChange( 
                                                     nextPlayer,
                                                     r->newActor );
-                                                setHeldGraveOrigin( nextPlayer, 
-                                                                    m.x, m.y,
-                                                                    resultID );
+
                                                 }
                                             }
                                         }
