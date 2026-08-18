@@ -146,6 +146,7 @@ ExistingAccountPage::ExistingAccountPage()
     mKeyField.usePasteShortcut(true);
     mTwinCodeField.setWidth( 360 );
     mSpawnSeed.setWidth( 360 );
+    mSpawnSeed.usePasteShortcut(true);
     mTargetFamily.setWidth( 360 );
     
     mFriendsButton.setSize( 175, 60 );
