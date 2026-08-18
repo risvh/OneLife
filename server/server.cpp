@@ -7703,6 +7703,11 @@ int processLoggedInPlayer( char inAllowReconnect,
     
 
 
+    if( connection->hashedSpawnSeed != 0 && SettingsManager::getIntSetting( "forceEveOnSeededSpawn", 0 ) ) {
+        parentChoices.deleteAll();
+        numBirthLocationsCurseBlocked = 0;
+        }
+    
     if( parentChoices.size() == 0 && numBirthLocationsCurseBlocked > 0 ) {
         // they are blocked from being born EVERYWHERE by curses
 
@@ -7756,10 +7761,6 @@ int processLoggedInPlayer( char inAllowReconnect,
         if( forceSpawn ) {
             parentChoices.deleteAll();
             }
-        }
-        
-    if( connection->hashedSpawnSeed != 0 && SettingsManager::getIntSetting( "forceEveOnSeededSpawn", 0 ) ) {
-        parentChoices.deleteAll();
         }
 
 
