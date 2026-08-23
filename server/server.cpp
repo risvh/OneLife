@@ -7718,6 +7718,8 @@ int processLoggedInPlayer( char inAllowReconnect,
         // d-town
         inCurseStatus.curseLevel = 1;
         inCurseStatus.excessPoints = 1;
+        newObject.curseStatus.curseLevel = 1;
+        newObject.curseStatus.excessPoints = 1;
         }
 
     
