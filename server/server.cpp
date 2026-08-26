@@ -246,7 +246,7 @@ static char *fertilitySuffix = NULL;
 // messages
 static char allowedSayCharMap[256];
 
-static const char *allowedSayChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ.-,'?! ";
+static const char *allowedSayChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ.-,'?!/ 0123456789";
 
 
 static int killEmotionIndex = 2;
