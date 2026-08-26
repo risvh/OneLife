@@ -5,7 +5,10 @@
 #include <assert.h>
 #include <float.h>
 #include <random>
+
 #include <string>
+#include <regex>
+#include <fstream>
 
 //  <time.h> added to add time stamps to recorded data
 #include <time.h>
@@ -213,6 +216,17 @@ static SimpleVector<char*> youGivingPhrases;
 static SimpleVector<char*> namedGivingPhrases;
 
 
+static std::string format_timestamp(double unix_ts) {
+    std::time_t raw_time = static_cast<std::time_t>(unix_ts);
+    std::tm* time_info = std::gmtime(&raw_time);
+
+    char buffer[20];
+    std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", time_info);
+
+    return std::string(buffer);
+}
+
+
 // password-protected objects
 static SimpleVector<char*> passwordProtectingPhrases;
 
@@ -234,6 +248,8 @@ void restorePasswordRecord( int x, int y, unsigned char* passwordChars ) {
 static SimpleVector<char*> infertilityDeclaringPhrases;
 static SimpleVector<char*> fertilityDeclaringPhrases;
 
+
+static SimpleVector<char*> matchingPhrases;
 
 
 
@@ -1887,6 +1903,8 @@ void quitCleanup() {
     
     // password-protected objects
     passwordProtectingPhrases.deallocateStringElements();
+
+    matchingPhrases.deallocateStringElements();
     
     if( curseYouPhrase != NULL ) {
         delete [] curseYouPhrase;
@@ -13919,6 +13937,26 @@ int main() {
                     }
                 }
             purgeStaleCravings( lowestCravingID );
+
+            matchingPhrases.deallocateStringElements();
+
+            char *cont = SettingsManager::getSettingContents( "matchingPhrases", "" );
+            
+            if( strcmp( cont, "" ) != 0 ) {
+                int numParts;
+                char **parts = split( cont, "\n", &numParts );
+                
+                
+                for( int i=0; i<numParts; i++ ) {
+                    if( strcmp( parts[i], "" ) != 0 ) {
+                        matchingPhrases.push_back( stringDuplicate(parts[i]) );
+                        }
+                    delete [] parts[i];
+                    }
+                delete [] parts;
+                }
+            delete [] cont;
+
             }
         
         
@@ -17276,7 +17314,29 @@ int main() {
                         
                         delete [] m.saidText;
                         m.saidText = cleanedString;
-                        
+
+
+                        bool matched = false;
+
+                        for( int i=0; i<matchingPhrases.size(); i++ ) {
+                            char *matchingPhrase = matchingPhrases.getElementDirect( i );
+                            std::regex re( matchingPhrase );
+                            if (std::regex_search(m.saidText, re)) {
+                                matched = true;
+
+                                std::ofstream ofs( "matchingLog.txt", std::ios_base::app);
+                                std::string timeString = format_timestamp( Time::getCurrentTime() );
+                                ofs << timeString;
+                                ofs << " ";
+                                ofs << autoSprintf( "%d", nextPlayer->id );
+                                ofs << " ";
+                                ofs << autoSprintf( "%s", m.saidText );
+                                ofs << std::endl;
+                                ofs.close();
+
+                                }
+
+                            }
                         
                         if( nextPlayer->ownedPositions.size() > 0 ) {
                             // consider phrases that assign ownership
@@ -17524,7 +17584,7 @@ int main() {
                             unsigned char metaData[ MAP_METADATA_LENGTH ];
                             int len = strlen( m.saidText );
                             
-                            if( strcmp( m.saidText, "" ) != 0 )
+                            if( strcmp( m.saidText, "" ) != 0 && !matched )
                             if( nextPlayer->holdingID > 0 &&
                                 len < MAP_METADATA_LENGTH &&
                                 getObject( 
@@ -17623,7 +17683,7 @@ int main() {
                         char *cleanSay = trimWhitespace( m.saidText );
                         
                         if( strcmp( cleanSay, "" ) != 0 ) {
-                            makePlayerSay( nextPlayer, cleanSay );
+                            makePlayerSay( nextPlayer, cleanSay, matched );
                             }
                         delete [] cleanSay;
                         }
