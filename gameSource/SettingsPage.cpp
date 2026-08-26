@@ -29,8 +29,12 @@ extern int targetFramesPerSecond;
 
 extern bool showingInGameSettings;
 
+extern doublePair lastScreenViewCenter;
+extern double viewWidth;
+
 extern float gui_fov_scale_before_settings;
 extern float gui_fov_target_scale_hud;
+extern float fovMax;
 
 // defined in LivingLifePage.cpp
 extern bool showUseOnHoverEnabled;
@@ -1309,6 +1313,10 @@ void SettingsPage::draw( doublePair inViewCenter,
 
         drawTextWithShadow("ALWAYS SHOW NAMES", pos, alignRight);
         }
+    
+    // There is the Fixed Zoom Level label text to the right of this checkbox
+    // Redraw this to get the cursorTip drawn on top
+    mEnableFOVBox.base_draw( lastScreenViewCenter, viewWidth );
     }
 
 
@@ -1380,6 +1388,7 @@ void SettingsPage::makeActive( char inFresh ) {
 
         mUISizeSlider.setValue( 1 / gui_fov_target_scale_hud );
         
+        mFOVSlider.setHighValue( fovMax );
         if ( SettingsManager::getIntSetting( "fovEnabled", 0 ) ) {
             mFOVSlider.setValue( gui_fov_scale_before_settings );
             }

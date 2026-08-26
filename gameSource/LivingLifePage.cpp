@@ -208,6 +208,7 @@ extern float gui_fov_scale_hud;
 extern float gui_fov_target_scale_hud;
 extern int gui_fov_offset_x;
 extern int gui_fov_offset_y;
+extern float fovMax;
 static SpriteHandle guiPanelLeftSprite;
 static SpriteHandle guiPanelTileSprite;
 static SpriteHandle guiPanelRightSprite;
@@ -29444,8 +29445,8 @@ void LivingLifePage::changeFOV( float newScale ) {
     if( newScale < 1.0f ) {
         newScale = 1.0f;
         }
-    else if( newScale > 10.0f ) {
-        newScale = 10.0f;
+    else if( newScale > fovMax ) {
+        newScale = fovMax;
         }
 
     LiveObject *ourLiveObject = getOurLiveObject();

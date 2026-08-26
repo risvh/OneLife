@@ -201,6 +201,8 @@ int gui_fov_offset_y = (int)(((720 * gui_fov_target_scale_hud) - 720)/2);
 
 float gui_fov_scale_before_settings = 1.0f;
 
+float fovMax = 10.0f;
+
 
 double viewWidth = 1280;
 double viewHeight = 720;
@@ -240,6 +242,8 @@ void loadFovSettings() {
     // don't apply fovFixedScale here
     // login page and loading page requires zoom = 1.0
     gui_fov_scale = 1.0f;
+
+    fovMax = SettingsManager::getFloatSetting( "fovMax", 10.0 );
 
     gui_fov_scale_hud = gui_fov_scale / gui_fov_target_scale_hud;
     gui_fov_offset_x = (int)(((1280 * gui_fov_target_scale_hud) - 1280)/2);
