@@ -4602,6 +4602,65 @@ void checkCustomGlobalMessage() {
     }
 
 
+void checkCustomExecution() {
+    
+    char *content = 
+        SettingsManager::getSettingContents( "customExecution", 
+                                             "" );
+    if( strcmp( content, "" ) != 0 ) {
+
+        int numLines;
+        
+        char **lines = split( content, "\n", &numLines );
+
+        for( int i=0; i<numLines; i++ ) {
+
+            char inputBuff[100] = {0};
+            int mode = 0;
+            if( sscanf( lines[i], "%d %99[^\n]", &mode, inputBuff ) < 1 ) {
+                delete [] lines[i];
+                continue;
+                }
+
+            LiveObject *target = NULL;
+
+            try {
+                int pid = 0; 
+                if( mode == 0 ) pid = std::stoi(inputBuff);
+
+                for( int j = 0; j < players.size(); j++ ) {
+                    LiveObject *player = players.getElement( j );
+                    if( player == NULL ) continue;
+                    if( 
+                        (mode == 0 && player->id == pid) ||
+                        (mode == 1 && player->name != NULL && strcmp( player->name, inputBuff ) == 0) ||
+                        (mode == 2 && player->email != NULL && strcmp( player->email, inputBuff ) == 0)
+                    ) {
+                        target = player;
+                        break;
+                        }
+                    }
+                }
+            catch (...) {
+                }
+
+            if( target != NULL ) {
+                setDeathReason( target, "customExecution" );
+                target->error = true;
+                target->errorCauseString = "CustomExecution";
+                }
+
+            delete [] lines[i];
+            }
+        delete [] lines;
+
+        SettingsManager::setSetting( "customExecution", "" );
+        }
+    
+    delete [] content;
+    }
+
+
 
 
 
@@ -13908,6 +13967,8 @@ int main() {
 
             
             checkCustomGlobalMessage();
+
+            checkCustomExecution();
             
 
             int lowestCravingID = INT_MAX;
